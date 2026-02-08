@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>문의하기 — 덴트맵 치과개원 입지분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>html{scroll-behavior:smooth}body{font-family:'Pretendard Variable',sans-serif}</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+<div id="test-banner"></div>
+<div id="app-header"></div>
+
+<section class="py-16">
+<div class="max-w-3xl mx-auto px-6">
+<div class="text-center mb-12"><h1 class="text-3xl md:text-4xl font-bold text-gray-900">문의하기</h1><p class="mt-3 text-gray-500">궁금한 점이나 제안 사항이 있으시면 언제든 연락해 주세요</p></div>
+<div class="grid md:grid-cols-3 gap-6 mb-12">
+<div class="bg-blue-50 rounded-xl p-6 text-center"><div class="text-3xl mb-3">📧</div><h3 class="font-semibold text-gray-900">이메일</h3><p class="text-sm text-gray-600 mt-1">hello@dentmap.co.kr</p><p class="text-xs text-gray-400 mt-1">24시간 내 답변</p></div>
+<div class="bg-green-50 rounded-xl p-6 text-center"><div class="text-3xl mb-3">📞</div><h3 class="font-semibold text-gray-900">전화</h3><p class="text-sm text-gray-600 mt-1">1600-0000</p><p class="text-xs text-gray-400 mt-1">평일 10:00~18:00</p></div>
+<div class="bg-yellow-50 rounded-xl p-6 text-center"><div class="text-3xl mb-3">💬</div><h3 class="font-semibold text-gray-900">카카오톡</h3><p class="text-sm text-gray-600 mt-1">@dentmap</p><p class="text-xs text-gray-400 mt-1">실시간 상담</p></div>
+</div>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+<h2 class="text-xl font-bold text-gray-900 mb-6">문의 양식</h2>
+<form class="space-y-5" onsubmit="return false">
+<div class="grid md:grid-cols-2 gap-5">
+<div><label class="block text-sm font-medium text-gray-700 mb-1">이름</label><input type="text" placeholder="이름을 입력해 주세요" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"></div>
+<div><label class="block text-sm font-medium text-gray-700 mb-1">이메일</label><input type="email" placeholder="답변 받으실 이메일" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"></div>
+</div>
+<div><label class="block text-sm font-medium text-gray-700 mb-1">문의 유형</label>
+<select class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition text-gray-600">
+<option value="" disabled selected>문의 유형을 선택해 주세요</option>
+<option>서비스 이용 문의</option><option>요금 및 결제 문의</option><option>기술 지원</option><option>제휴/파트너십</option><option>투자 문의</option><option>기타</option>
+</select></div>
+<div><label class="block text-sm font-medium text-gray-700 mb-1">문의 내용</label>
+<textarea rows="6" placeholder="문의 내용을 자세히 적어주시면 빠르게 답변드리겠습니다" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition resize-none"></textarea></div>
+<button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">문의 보내기</button>
+<p class="text-xs text-gray-400 text-center">보통 24시간 이내에 답변드립니다</p>
+</form>
+</div>
+</div>
+</section>
+
+<div id="app-footer"></div>
+<script src="shared.js"></script>
+<script>initPage('');</script>
+</body></html>

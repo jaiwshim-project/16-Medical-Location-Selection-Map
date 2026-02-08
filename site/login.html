@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>로그인 — 덴트맵 치과개원 입지분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>html{scroll-behavior:smooth}body{font-family:'Pretendard Variable',sans-serif}</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+<div id="test-banner"></div>
+<div id="app-header"></div>
+
+<section class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12">
+<div class="max-w-md w-full mx-auto px-6">
+<div class="text-center mb-8">
+<a href="index.html" class="inline-flex items-center gap-2 mb-6"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold">D</span></div><span class="font-bold text-2xl text-gray-900">덴트맵 <span class="text-lg font-semibold text-gray-500">치과개원 입지분석</span></span></a>
+<h1 class="text-2xl font-bold text-gray-900">로그인</h1>
+<p class="text-gray-500 mt-2">다시 오신 것을 환영합니다</p>
+</div>
+<div class="bg-green-50 border border-green-200 rounded-xl p-5 mb-6">
+<div class="flex items-start gap-3">
+<span class="text-2xl">🧪</span>
+<div>
+<p class="font-bold text-green-800">테스트 모드 활성화</p>
+<p class="text-sm text-green-700 mt-1">현재 테스트 환경입니다. 로그인 없이 모든 기능을 체험할 수 있습니다.</p>
+<a href="map.html" class="mt-3 inline-block bg-green-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-green-700 transition text-sm">로그인 없이 바로 체험하기 &rarr;</a>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 opacity-60 pointer-events-none">
+<form class="space-y-5">
+<div><label class="block text-sm font-medium text-gray-700 mb-1">이메일</label><input type="email" placeholder="선생님의 이메일을 입력해 주세요" class="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none" disabled></div>
+<div><label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label><input type="password" placeholder="비밀번호를 입력해 주세요" class="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none" disabled></div>
+<button type="button" class="w-full bg-gray-400 text-white font-semibold py-3 rounded-lg cursor-not-allowed">로그인 (테스트 모드에서 비활성)</button>
+</form>
+</div>
+<p class="text-center text-sm text-gray-400 mt-6">테스트 모드에서는 로그인이 필요 없습니다</p>
+</div>
+</section>
+
+<div id="app-footer"></div>
+<script src="shared.js"></script>
+<script>initPage('');</script>
+</body></html>

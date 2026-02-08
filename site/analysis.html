@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>입지 분석 — 덴트맵 치과개원 입지분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>html{scroll-behavior:smooth}body{font-family:'Pretendard Variable',sans-serif}input[type=range]{cursor:pointer}</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+<div id="test-banner"></div>
+<div id="app-header"></div>
+<div id="analysis-content"></div>
+<div id="app-footer"></div>
+<script src="shared.js"></script>
+<script>
+initPage('map');
+
+let analysisState={tab:'overview',generating:false,generated:false};
+let invState={};
+
+function getInv(r){
+  if(!invState[r.dong_code])invState[r.dong_code]={pyeong:r.area_pyeong,deposit:r.avg_rent_pyeong*r.area_pyeong*10,interior:r.area_pyeong*200,equipment:12000,operating:3000};
+  return invState[r.dong_code];
+}
+
+function loadAnalysis(){
+  const hash=location.hash.slice(1);
+  if(!hash){
+    document.getElementById('analysis-content').innerHTML='<div class="min-h-[60vh] flex items-center justify-center"><div class="text-center"><p class="text-4xl mb-4">🔍</p><p class="text-gray-500">분석할 지역을 선택해 주세요</p><a href="map.html" class="text-blue-600 mt-3 inline-block hover:underline">&larr; 지도로 돌아가기</a></div></div>';
+    return;
+  }
+  const r=resolveRegionFromHash(hash);
+  if(!r){
+    document.getElementById('analysis-content').innerHTML='<div class="min-h-[60vh] flex items-center justify-center"><div class="text-center"><p class="text-4xl mb-4">🔍</p><p class="text-gray-500">해당 지역 데이터를 찾을 수 없습니다</p><a href="map.html" class="text-blue-600 mt-3 inline-block hover:underline">&larr; 지도로 돌아가기</a></div></div>';
+    return;
+  }
+  analysisState={tab:'overview',generating:false,generated:false};
+  renderAnalysisContent(r);
+}
+
+function renderAnalysisContent(r){
+  const texts=genTexts(r);
+  const tab=analysisState.tab;
+  let tabContent='';
+  if(tab==='overview')tabContent=buildOverviewTab(r,texts);
+  else if(tab==='investment')tabContent=buildInvestmentTab(r);
+  else tabContent=buildReportTab(r,texts);
+
+  const loc=r.sido?r.sido+' '+r.sigungu+' ':'';
+  const genBadge=r._generated?'<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-medium px-2 py-1 rounded-full ml-2">시뮬레이션</span>':'';
+  document.getElementById('analysis-content').innerHTML='<div class="max-w-6xl mx-auto px-6 py-8">'
+    +(r._generated?'<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-800 flex items-center gap-2"><span>⚠️</span> 이 지역은 테스트용 시뮬레이션 데이터입니다. 실제 데이터와 다를 수 있습니다.</div>':'')
+    +'<div class="flex items-center justify-between mb-6"><div class="flex items-center gap-2 text-sm text-gray-400"><a href="map.html" class="hover:text-blue-600 transition">지도 탐색</a><span>/</span><span class="text-gray-700">'+loc+r.dong+'</span></div><div class="flex items-center gap-2"><input id="analysis-quick-input" type="text" placeholder="다른 지역 입력" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 outline-none w-40" onkeydown="if(event.key===\'Enter\')analyzeFromInput()"><button onclick="analyzeFromInput()" class="bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">분석</button></div></div>'
+    +'<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8"><div><p class="text-sm text-gray-400">'+loc+'</p><h1 class="text-3xl font-bold text-gray-900">'+r.dong+' 입지 분석'+genBadge+'</h1></div><div class="flex items-center gap-3"><div class="px-4 py-2 rounded-xl text-lg font-bold '+getGradeColor(r.grade)+'">종합 '+r.scores.total+'점 &middot; '+r.grade+'등급</div></div></div>'
+    +'<div class="border-b border-gray-200 mb-8"><div class="flex gap-1">'
+    +'<button onclick="switchTab(\'overview\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='overview'?'border-blue-600 text-blue-600':'border-transparent text-gray-500 hover:text-gray-700')+'">종합 분석</button>'
+    +'<button onclick="switchTab(\'investment\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='investment'?'border-blue-600 text-blue-600':'border-transparent text-gray-500 hover:text-gray-700')+'">투자 시뮬레이터</button>'
+    +'<button onclick="switchTab(\'report\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='report'?'border-blue-600 text-blue-600':'border-transparent text-gray-500 hover:text-gray-700')+'">AI 결정 리포트</button>'
+    +'</div></div>'
+    +tabContent
+    +'</div>';
+}
+
+function switchTab(tab,code){
+  const r=REGIONS.find(x=>x.dong_code===code);
+  if(!r)return;
+  analysisState.tab=tab;
+  renderAnalysisContent(r);
+}
+
+function analyzeFromInput(){
+  const input=document.getElementById('analysis-quick-input');
+  const name=(input?input.value:'').trim();
+  if(!name)return;
+  const existing=REGIONS.find(r=>r.dong.includes(name)||r.sigungu.includes(name));
+  if(existing){location.hash=existing.dong_code;loadAnalysis();return}
+  location.hash='gen:'+encodeURIComponent(name);
+  loadAnalysis();
+}
+
+/* ── Overview Tab ── */
+function buildOverviewTab(r,texts){
+  const axes=[{key:'population',label:'인구/수요',icon:'👥',score:r.scores.population,text:texts.popText},{key:'competition',label:'경쟁 환경',icon:'🏥',score:r.scores.competition,text:texts.compText},{key:'cost',label:'비용 효율',icon:'💰',score:r.scores.cost,text:texts.costText},{key:'access',label:'접근성',icon:'🚇',score:r.scores.access,text:texts.accessText},{key:'growth',label:'성장성',icon:'📈',score:r.scores.growth,text:texts.growthText}];
+
+  let h='<div class="space-y-8"><div class="grid grid-cols-2 md:grid-cols-5 gap-4">';
+  axes.forEach(a=>{h+='<div class="bg-white rounded-xl border border-gray-100 p-4 text-center shadow-sm"><p class="text-2xl">'+a.icon+'</p><p class="text-xs text-gray-500 mt-1">'+a.label+'</p><p class="text-2xl font-bold mt-1 '+getScoreColor(a.score)+'">'+a.score+'</p><div class="mt-2 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full '+getScoreBarColor(a.score)+'" style="width:'+a.score+'%"></div></div></div>'});
+  h+='</div>';
+
+  h+='<div class="grid md:grid-cols-4 gap-4">';
+  [{l:"거주인구",v:fmt(r.population)+"명",s:"20~39세 "+r.age_20_39_pct+"%"},{l:"치과 수 / 인구당",v:r.dental_count+"개",s:"1:"+fmt(r.pop_per_clinic)},{l:"평균 임대료",v:r.avg_rent_pyeong+"만/평",s:r.area_pyeong+"평 기준 월 "+fmt(r.avg_rent_pyeong*r.area_pyeong)+"만"},{l:"일 유동인구",v:fmt(r.daily_floating)+"명",s:r.subway_station+" 도보 "+r.subway_walk_min+"분"}].forEach(i=>{h+='<div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500">'+i.l+'</p><p class="text-xl font-bold text-gray-900 mt-1">'+i.v+'</p><p class="text-xs text-gray-400 mt-1">'+i.s+'</p></div>'});
+  h+='</div>';
+
+  h+='<div class="space-y-4"><h2 class="text-lg font-bold text-gray-900">5축 상세 분석</h2>';
+  axes.forEach(a=>{h+='<div class="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-xl">'+a.icon+'</span><h3 class="font-bold text-gray-900">'+a.label+'</h3></div><span class="text-lg font-bold '+getScoreColor(a.score)+'">'+a.score+'점</span></div><div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full '+getScoreBarColor(a.score)+'" style="width:'+a.score+'%"></div></div><p class="text-sm text-gray-600 leading-relaxed">'+a.text+'</p></div>'});
+  h+='</div></div>';
+  return h;
+}
+
+/* ── Investment Tab ── */
+function buildInvestmentTab(r){
+  const s=getInv(r);
+  const py=s.pyeong;
+  const monthlyRent=r.avg_rent_pyeong*py;
+  const maintenance=Math.round(py*5);
+  const labor=py<=30?800:py<=45?1500:2200;
+  const dailyPatients=Math.round(r.population/Math.max(r.dental_count,1)/120);
+  const unitPrice=15;
+  const monthlyRevenue=dailyPatients*unitPrice*25;
+  const materialCost=Math.round(monthlyRevenue*0.15);
+  const otherFixed=300;
+  const totalInvestment=s.deposit+s.interior+s.equipment+s.operating;
+  const totalMonthlyCost=monthlyRent+maintenance+labor+materialCost+otherFixed;
+  const monthlyProfit=monthlyRevenue-totalMonthlyCost;
+  const breakeven=monthlyProfit>0?Math.ceil(totalInvestment/monthlyProfit):999;
+  const scenarios={opt:Math.max(1,Math.round(breakeven*0.75)),base:breakeven,cons:Math.round(breakeven*1.4)};
+
+  let chart='';
+  const chartLen=Math.min(36,scenarios.cons+6);
+  for(let i=1;i<=chartLen;i++){
+    const cum=-totalInvestment+monthlyProfit*i;
+    const maxAbs=Math.max(totalInvestment,Math.abs(cum));
+    const h=Math.abs(cum)/maxAbs*100;
+    chart+='<div class="flex-1 flex flex-col justify-end items-center" title="'+i+'개월: '+fmt(Math.round(cum))+'만원"><div class="w-full rounded-t transition-all '+(cum>=0?'bg-blue-400':'bg-red-300')+'" style="height:'+Math.max(4,h*0.8)+'%"></div></div>';
+  }
+
+  return '<div class="space-y-8">'
+    +'<div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h2 class="font-bold text-gray-900 mb-4">면적 설정</h2><div class="flex items-center gap-4"><span class="text-sm text-gray-500 w-12">20평</span><input type="range" min="20" max="80" value="'+py+'" oninput="updateInvPyeong(\''+r.dong_code+'\',this.value)" class="flex-1 accent-blue-600"><span class="text-sm text-gray-500 w-12">80평</span></div><p class="text-center mt-2 text-lg font-bold text-blue-600">'+py+'평</p><p class="text-center text-xs text-gray-400">슬라이더를 조정하면 모든 금액이 자동 계산됩니다</p></div>'
+    +'<div class="grid md:grid-cols-2 gap-6">'
+    +'<div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h2 class="font-bold text-gray-900 mb-4">초기 투자금</h2><div class="space-y-4">'
+    +'<div class="flex items-center justify-between"><span class="text-sm text-gray-600">보증금</span><div class="flex items-center gap-1"><input type="number" value="'+s.deposit+'" onchange="updateInvField(\''+r.dong_code+'\',\'deposit\',this.value)" class="w-28 text-right px-2 py-1 border border-gray-200 rounded text-sm font-medium focus:ring-2 focus:ring-blue-600 outline-none"><span class="text-xs text-gray-400">만원</span></div></div>'
+    +'<div class="flex items-center justify-between"><span class="text-sm text-gray-600">인테리어</span><div class="flex items-center gap-1"><input type="number" value="'+s.interior+'" onchange="updateInvField(\''+r.dong_code+'\',\'interior\',this.value)" class="w-28 text-right px-2 py-1 border border-gray-200 rounded text-sm font-medium focus:ring-2 focus:ring-blue-600 outline-none"><span class="text-xs text-gray-400">만원</span></div></div>'
+    +'<div class="flex items-center justify-between"><span class="text-sm text-gray-600">의료장비</span><div class="flex items-center gap-1"><input type="number" value="'+s.equipment+'" onchange="updateInvField(\''+r.dong_code+'\',\'equipment\',this.value)" class="w-28 text-right px-2 py-1 border border-gray-200 rounded text-sm font-medium focus:ring-2 focus:ring-blue-600 outline-none"><span class="text-xs text-gray-400">만원</span></div></div>'
+    +'<div class="flex items-center justify-between"><span class="text-sm text-gray-600">운영자금 (3개월)</span><div class="flex items-center gap-1"><input type="number" value="'+s.operating+'" onchange="updateInvField(\''+r.dong_code+'\',\'operating\',this.value)" class="w-28 text-right px-2 py-1 border border-gray-200 rounded text-sm font-medium focus:ring-2 focus:ring-blue-600 outline-none"><span class="text-xs text-gray-400">만원</span></div></div>'
+    +'<hr class="border-gray-100"><div class="flex items-center justify-between font-bold"><span class="text-gray-900">합계</span><span class="text-blue-600 text-lg">'+fmt(totalInvestment)+'만원</span></div>'
+    +'<p class="text-xs text-gray-400 text-right">약 '+(totalInvestment/10000).toFixed(1)+'억원</p>'
+    +'</div></div>'
+    +'<div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h2 class="font-bold text-gray-900 mb-4">월간 손익 예측</h2><div class="space-y-3">'
+    +'<div class="bg-green-50 rounded-lg p-3"><div class="flex items-center justify-between"><span class="text-sm text-green-700 font-medium">예상 월매출</span><span class="font-bold text-green-700">'+fmt(monthlyRevenue)+'만원</span></div><p class="text-xs text-green-600 mt-1">일 환자 '+dailyPatients+'명 &times; 객단가 '+unitPrice+'만원 &times; 25일</p></div>'
+    +'<div class="flex items-center justify-between text-sm"><span class="text-gray-600">(-) 임대료</span><span class="text-red-500 font-medium">'+fmt(monthlyRent)+'만원</span></div>'
+    +'<div class="flex items-center justify-between text-sm"><span class="text-gray-600">(-) 관리비</span><span class="text-red-500 font-medium">'+fmt(maintenance)+'만원</span></div>'
+    +'<div class="flex items-center justify-between text-sm"><span class="text-gray-600">(-) 인건비</span><span class="text-red-500 font-medium">'+fmt(labor)+'만원</span></div>'
+    +'<div class="flex items-center justify-between text-sm"><span class="text-gray-600">(-) 재료비 (매출 15%)</span><span class="text-red-500 font-medium">'+fmt(materialCost)+'만원</span></div>'
+    +'<div class="flex items-center justify-between text-sm"><span class="text-gray-600">(-) 기타 고정비</span><span class="text-red-500 font-medium">'+fmt(otherFixed)+'만원</span></div>'
+    +'<hr class="border-gray-100"><div class="flex items-center justify-between font-bold text-lg"><span>월 순이익</span><span class="'+(monthlyProfit>0?'text-blue-600':'text-red-500')+'">'+(monthlyProfit>0?'+':'')+fmt(monthlyProfit)+'만원</span></div>'
+    +'</div></div></div>'
+    +'<div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h2 class="font-bold text-gray-900 mb-4">손익분기 분석</h2>'
+    +'<div class="grid grid-cols-3 gap-4 mb-6">'
+    +'<div class="rounded-xl p-4 text-center text-green-600 bg-green-50"><p class="text-xs font-medium">낙관적 시나리오</p><p class="text-3xl font-bold mt-1">'+scenarios.opt+'</p><p class="text-xs">개월</p></div>'
+    +'<div class="rounded-xl p-4 text-center text-blue-600 bg-blue-50"><p class="text-xs font-medium">기본 시나리오</p><p class="text-3xl font-bold mt-1">'+scenarios.base+'</p><p class="text-xs">개월</p></div>'
+    +'<div class="rounded-xl p-4 text-center text-orange-600 bg-orange-50"><p class="text-xs font-medium">보수적 시나리오</p><p class="text-3xl font-bold mt-1">'+scenarios.cons+'</p><p class="text-xs">개월</p></div>'
+    +'</div>'
+    +'<div class="h-48 flex items-end gap-1">'+chart+'</div>'
+    +'<div class="flex justify-between text-xs text-gray-400 mt-2"><span>1개월</span><span>'+chartLen+'개월</span></div>'
+    +'<p class="text-xs text-gray-400 text-center mt-1">파란색 = 흑자 / 빨간색 = 적자 (마우스를 올리면 금액 확인)</p></div>'
+    +'<p class="text-xs text-gray-400 text-center">* 금액을 직접 수정할 수 있습니다. 실제 비용은 지역·업체에 따라 달라질 수 있습니다.</p></div>';
+}
+
+function updateInvPyeong(code,val){
+  const r=REGIONS.find(x=>x.dong_code===code);if(!r)return;
+  const s=getInv(r);s.pyeong=Number(val);
+  renderAnalysisContent(r);
+}
+function updateInvField(code,field,val){
+  const r=REGIONS.find(x=>x.dong_code===code);if(!r)return;
+  const s=getInv(r);s[field]=Number(val);
+  renderAnalysisContent(r);
+}
+
+/* ── Report Tab ── */
+function buildReportTab(r,texts){
+  if(!analysisState.generated){
+    return '<div class="text-center py-20"><p class="text-5xl mb-4">📋</p><h2 class="text-xl font-bold text-gray-900">AI 결정 리포트</h2><p class="text-gray-500 mt-2 leading-relaxed">5축 분석과 투자 시뮬레이션을 종합하여<br>AI가 맞춤형 결정 리포트를 생성합니다.</p><button onclick="generateReport(\''+r.dong_code+'\')" '+(analysisState.generating?'disabled':'')+' class="mt-6 bg-blue-600 text-white font-semibold px-8 py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50">'+(analysisState.generating?'<span class="flex items-center gap-2"><svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>AI가 분석 중입니다...</span>':'AI 결정 리포트 생성')+'</button></div>';
+  }
+
+  const ts=r.scores.total;
+  const sl=ts>=80?'매우 유망':ts>=70?'추천':ts>=60?'조건부 추천':'주의 필요';
+  const dep=r.avg_rent_pyeong*r.area_pyeong*10,intr=r.area_pyeong*200,eq=12000,ti=dep+intr+eq+3000;
+  const mr=r.avg_rent_pyeong*r.area_pyeong;
+  const dp=Math.round(r.population/Math.max(r.dental_count,1)/120);
+  const mRev=dp*15*25;
+  const mProf=mRev-mr-800-Math.round(mRev*0.15)-300-Math.round(r.area_pyeong*5);
+  const be=mProf>0?Math.ceil(ti/mProf):999;
+
+  const execSum=ts>=80?r.sido+' '+r.sigungu+' '+r.dong+'에서의 치과 개원은 매우 유망합니다. 투자금 약 '+(ti/10000).toFixed(1)+'억 대비 '+be+'개월 내 손익분기가 기대됩니다.':ts>=70?r.dong+'은 개원에 적합한 입지입니다. 월 매출 '+fmt(mRev)+'만원이 현실적으로 기대됩니다.':r.dong+'에서의 개원은 가능하나, 보수적 시나리오에서는 '+Math.round(be*1.4)+'개월이 소요될 수 있습니다.';
+
+  const scoreAxes=[{l:'인구/수요',s:r.scores.population},{l:'경쟁 환경',s:r.scores.competition},{l:'비용 효율',s:r.scores.cost},{l:'접근성',s:r.scores.access},{l:'성장성',s:r.scores.growth}];
+  const detailAxes=[{l:'인구/수요',s:r.scores.population,t:texts.popText},{l:'경쟁 환경',s:r.scores.competition,t:texts.compText},{l:'비용 효율',s:r.scores.cost,t:texts.costText},{l:'접근성',s:r.scores.access,t:texts.accessText},{l:'성장성',s:r.scores.growth,t:texts.growthText}];
+
+  let risks='';
+  if(r.scores.competition<60)risks+='<div class="bg-red-50 rounded-lg p-3 text-sm text-red-800">반경 500m 내 치과 '+r.dental_count+'개로 경쟁이 치열합니다.</div>';
+  if(r.scores.cost<60)risks+='<div class="bg-red-50 rounded-lg p-3 text-sm text-red-800">평당 '+r.avg_rent_pyeong+'만원의 높은 임대료로 고정비 부담이 큽니다.</div>';
+  if(r.pop_growth_rate<1)risks+='<div class="bg-red-50 rounded-lg p-3 text-sm text-red-800">인구 증가율 '+r.pop_growth_rate+'%로 중장기 성장이 제한적입니다.</div>';
+  if(!risks)risks='<div class="bg-yellow-50 rounded-lg p-3 text-sm text-yellow-800">전반적으로 리스크가 낮으나, 경기 변동에 유의하세요.</div>';
+
+  let opps='';
+  if(r.scores.population>=70)opps+='<div class="bg-green-50 rounded-lg p-3 text-sm text-green-800">거주인구 '+fmt(r.population)+'명, 유동인구 '+fmt(r.daily_floating)+'명으로 수요 기반이 탄탄합니다.</div>';
+  if(r.pop_growth_rate>=3)opps+='<div class="bg-green-50 rounded-lg p-3 text-sm text-green-800">인구 증가율 +'+r.pop_growth_rate+'%로 성장 잠재력이 높습니다.</div>';
+  if(r.age_20_39_pct>=35)opps+='<div class="bg-green-50 rounded-lg p-3 text-sm text-green-800">20~39세 비율 '+r.age_20_39_pct+'%로 고단가 진료 수요가 풍부합니다.</div>';
+
+  return '<div class="max-w-3xl mx-auto space-y-8">'
+    +'<div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white"><div class="flex items-center justify-between mb-4"><p class="text-blue-200 text-sm">AI 결정 리포트</p><p class="text-blue-200 text-xs">'+new Date().toLocaleDateString('ko-KR')+'</p></div><h2 class="text-2xl font-bold">'+r.sido+' '+r.sigungu+' '+r.dong+'</h2><p class="mt-1 text-blue-100">종합 '+ts+'점 ('+r.grade+'등급) &mdash; '+sl+'</p></div>'
+    +'<section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold text-gray-900 flex items-center gap-2 mb-3"><span class="text-blue-600">01</span> 한 줄 판정</h3><div class="bg-blue-50 rounded-lg p-4"><p class="text-gray-800 leading-relaxed font-medium">'+execSum+'</p></div></section>'
+    +'<section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold text-gray-900 flex items-center gap-2 mb-4"><span class="text-blue-600">02</span> 종합 점수</h3><div class="flex items-center gap-6 mb-4"><div class="text-center"><p class="text-5xl font-bold '+getScoreColor(ts)+'">'+ts+'</p><p class="text-sm text-gray-500 mt-1">'+r.grade+'등급</p></div><div class="flex-1 space-y-2">'+scoreAxes.map(a=>'<div class="flex items-center gap-2"><span class="text-xs text-gray-500 w-16">'+a.l+'</span><div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full '+getScoreBarColor(a.s)+'" style="width:'+a.s+'%"></div></div><span class="text-xs font-bold w-8 text-right '+getScoreColor(a.s)+'">'+a.s+'</span></div>').join('')+'</div></div></section>'
+    +'<section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold text-gray-900 flex items-center gap-2 mb-4"><span class="text-blue-600">03</span> 5축 상세 분석</h3><div class="space-y-4">'+detailAxes.map(a=>'<div class="border-l-4 border-blue-100 pl-4 py-2"><div class="flex items-center gap-2 mb-1"><span class="font-semibold text-sm text-gray-900">'+a.l+'</span><span class="text-xs font-bold px-2 py-0.5 rounded '+getGradeColor(a.s>=80?'A':a.s>=60?'B':'C')+'">'+a.s+'점</span></div><p class="text-sm text-gray-600 leading-relaxed">'+a.t+'</p></div>').join('')+'</div></section>'
+    +'<section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold text-gray-900 flex items-center gap-2 mb-4"><span class="text-blue-600">04</span> 투자 시뮬레이션 요약</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">'
+    +'<div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">총 투자금</p><p class="text-lg font-bold">'+(ti/10000).toFixed(1)+'억</p></div>'
+    +'<div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">예상 월매출</p><p class="text-lg font-bold text-green-600">'+fmt(mRev)+'만</p></div>'
+    +'<div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">월 순이익</p><p class="text-lg font-bold text-blue-600">'+fmt(mProf)+'만</p></div>'
+    +'<div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">손익분기</p><p class="text-lg font-bold">'+be+'개월</p></div>'
+    +'</div></section>'
+    +'<section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold text-gray-900 flex items-center gap-2 mb-4"><span class="text-blue-600">05</span> 핵심 리스크 & 기회</h3><div class="grid md:grid-cols-2 gap-4"><div><p class="font-semibold text-red-600 text-sm mb-2">리스크</p><div class="space-y-2">'+risks+'</div></div><div><p class="font-semibold text-green-600 text-sm mb-2">기회</p><div class="space-y-2">'+opps+'</div></div></div></section>'
+    +'<div class="bg-gray-50 rounded-xl p-4 text-xs text-gray-400 leading-relaxed">본 리포트는 공공데이터 및 통계 모델에 기반한 참고 자료이며, 실제 개원 결정에 대한 법적 책임을 지지 않습니다.<br>데이터 기준일: 2025.01 | 분석 모델 v1.0 | &copy; DentMap</div>'
+    +'<div class="flex flex-col sm:flex-row gap-3 justify-center pb-8">'
+    +'<button class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">PDF 다운로드</button>'
+    +'<button class="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition">공유 링크 복사</button>'
+    +'<a href="map.html" class="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition text-center">다른 지역 분석</a>'
+    +'</div></div>';
+}
+
+function generateReport(code){
+  analysisState.generating=true;
+  const r=REGIONS.find(x=>x.dong_code===code);
+  if(r)renderAnalysisContent(r);
+  setTimeout(function(){
+    analysisState.generating=false;
+    analysisState.generated=true;
+    if(r)renderAnalysisContent(r);
+  },2000);
+}
+
+/* ── Init ── */
+window.addEventListener('hashchange',loadAnalysis);
+loadAnalysis();
+</script>
+</body></html>

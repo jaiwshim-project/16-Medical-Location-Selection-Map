@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>덴트맵 치과개원 입지분석 — 데이터로 찾는 최적의 치과 개원 입지</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>html{scroll-behavior:smooth}body{font-family:'Pretendard Variable',sans-serif}details summary::-webkit-details-marker{display:none}details summary{list-style:none}</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+<div id="test-banner"></div>
+<div id="app-header"></div>
+
+<!-- Hero -->
+<section class="relative min-h-[85vh] flex items-center bg-gradient-to-br from-white via-blue-50/30 to-white">
+<div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 py-20">
+<div class="flex flex-col justify-center">
+<div class="inline-flex items-center gap-2 bg-green-50 text-green-700 text-sm font-medium px-4 py-2 rounded-full w-fit mb-6"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> 테스트 모드 — 로그인 없이 모든 기능 체험 가능</div>
+<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-gray-900">개원,<br>감이 아니라<br><span class="text-blue-600">데이터</span>로.</h1>
+<p class="mt-6 text-lg text-gray-600 leading-relaxed">인구, 경쟁, 임대료, 교통, 성장성 &mdash;<br class="hidden sm:block">5가지 핵심 데이터를 AI가 분석하고,<br class="hidden sm:block">선생님에게 딱 맞는 개원 입지를 추천합니다.</p>
+<div class="mt-8">
+<div class="flex flex-col sm:flex-row gap-2 max-w-lg">
+<div class="relative flex-1"><svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+<input id="quick-search" type="text" placeholder="분석할 지역명 입력 (예: 홍대, 강남, 수원)" class="w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition" onkeydown="if(event.key==='Enter')doQuick()"></div>
+<button onclick="doQuick()" class="bg-blue-600 text-white text-lg font-semibold px-8 py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 whitespace-nowrap">분석하기</button>
+</div>
+</div>
+<p class="mt-3 text-sm text-gray-400">아무 지역이나 입력하세요 — 로그인 없이 바로 AI 분석 결과를 확인할 수 있습니다</p>
+</div>
+<div class="relative hidden md:block">
+<div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+<div class="flex items-center gap-2 mb-4"><div class="w-3 h-3 rounded-full bg-red-400"></div><div class="w-3 h-3 rounded-full bg-yellow-400"></div><div class="w-3 h-3 rounded-full bg-green-400"></div><span class="ml-3 text-xs text-gray-400">dentmap.co.kr/map</span></div>
+<div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl h-48 flex items-center justify-center text-gray-400 text-sm mb-4"><div class="text-center"><div class="text-4xl mb-2">🗺️</div><span>전국 입지 히트맵</span></div></div>
+<div class="grid grid-cols-3 gap-3"><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">인구</p><p class="text-lg font-bold text-blue-600">32,450</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">경쟁</p><p class="text-lg font-bold text-orange-500">12개</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">종합</p><p class="text-lg font-bold text-green-600">81점</p></div></div>
+</div>
+<div class="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-gray-100 p-4"><p class="text-sm text-gray-500">종합 점수</p><p class="text-3xl font-bold text-blue-600">81점</p><p class="text-xs text-green-600 font-medium">A등급 &middot; 상위 15%</p></div>
+</div>
+</div>
+</section>
+
+<!-- Social Proof -->
+<section class="bg-gray-50 py-10 border-y border-gray-100">
+<div class="max-w-5xl mx-auto px-6 flex flex-wrap justify-center gap-8 md:gap-16">
+<div class="text-center"><p class="text-2xl md:text-3xl font-bold">3,200+</p><p class="text-sm text-gray-500 mt-1">분석 완료</p></div>
+<div class="text-center"><p class="text-2xl md:text-3xl font-bold">1,500+</p><p class="text-sm text-gray-500 mt-1">가입 원장</p></div>
+<div class="text-center"><p class="text-2xl md:text-3xl font-bold">4.7/5.0</p><p class="text-sm text-gray-500 mt-1">평균 만족도</p></div>
+<div class="text-center"><p class="text-2xl md:text-3xl font-bold">15종+</p><p class="text-sm text-gray-500 mt-1">분석 데이터</p></div>
+</div>
+</section>
+
+<!-- Problem -->
+<section class="py-20">
+<div class="max-w-4xl mx-auto px-6 text-center">
+<h2 class="text-3xl md:text-4xl font-bold">치과 원장 10명 중 7명,<br><span class="text-red-500">&ldquo;입지 선정이 가장 어려웠다&rdquo;</span></h2>
+<div class="mt-12 grid md:grid-cols-2 gap-4" id="problems"></div>
+<p class="mt-10 text-xl text-blue-600 font-semibold">덴트맵은 이 모든 과정을 데이터로 바꿉니다.</p>
+</div>
+</section>
+
+<!-- Features -->
+<section class="py-20 bg-gray-50"><div class="max-w-6xl mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center">개원의 모든 숫자, 한눈에.</h2><div class="mt-16 grid md:grid-cols-3 gap-8" id="features"></div></div></section>
+
+<!-- How It Works -->
+<section class="py-20"><div class="max-w-5xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">3단계로 시작하세요</h2>
+<div class="mt-16 grid md:grid-cols-3 gap-12">
+<div class="text-center"><div class="w-16 h-16 mx-auto bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-600/20">1</div><h3 class="mt-5 font-bold text-lg">프로필 입력</h3><p class="mt-2 text-gray-600">경력, 예산, 관심 지역을 30초 만에 입력하세요</p></div>
+<div class="text-center"><div class="w-16 h-16 mx-auto bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-600/20">2</div><h3 class="mt-5 font-bold text-lg">지도 탐색</h3><p class="mt-2 text-gray-600">히트맵으로 유망 지역을 한눈에 파악하세요</p></div>
+<div class="text-center"><div class="w-16 h-16 mx-auto bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-600/20">3</div><h3 class="mt-5 font-bold text-lg">리포트 확인</h3><p class="mt-2 text-gray-600">AI가 분석한 입지 점수와 투자 계획을 받아보세요</p></div>
+</div></div></section>
+
+<!-- Testimonials -->
+<section class="py-20 bg-gray-50"><div class="max-w-5xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">먼저 경험한 원장님들의 이야기</h2><div class="mt-12 grid md:grid-cols-3 gap-8" id="testimonials"></div></div></section>
+
+<!-- Pricing -->
+<section class="py-20" data-pricing></section>
+
+<!-- FAQ -->
+<section class="py-20 bg-gray-50"><div class="max-w-3xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">자주 묻는 질문</h2><div class="mt-12 space-y-4" id="home-faq"></div></div></section>
+
+<!-- Final CTA -->
+<section class="py-20 bg-blue-600 text-white">
+<div class="max-w-3xl mx-auto px-6 text-center">
+<h2 class="text-3xl md:text-4xl font-bold">아직 감으로 입지를 고르고 계신가요?</h2>
+<p class="mt-4 text-blue-100 text-lg">지금 시작하면 1개 지역 무료 분석이 제공됩니다.<br>데이터가 보여주는 최적의 자리를 직접 확인해 보세요.</p>
+<a href="map.html" class="mt-8 inline-block bg-white text-blue-600 font-bold px-10 py-4 rounded-xl text-lg hover:shadow-lg transition">지금 바로 체험하기 &rarr;</a>
+<p class="mt-3 text-sm text-blue-200">로그인 없이 모든 분석 기능을 사용해 보세요</p>
+</div>
+</section>
+
+<div id="app-footer"></div>
+<script src="shared.js"></script>
+<script>
+initPage('home');
+function doQuick(){const v=(document.getElementById('quick-search').value||'').trim();if(!v)return;goAnalysis(v)}
+
+document.getElementById('problems').innerHTML=["부동산 중개사의 주관적 추천에 의존","지인 소개로 '감'에 의한 결정","인구·경쟁·임대료 데이터를 직접 모으는 수개월",'개원 후에야 "여기가 아니었는데..." 후회'].map(t=>`<div class="bg-red-50 rounded-xl p-6 border border-red-100 text-left"><span class="text-red-400 text-xl font-bold">&times;</span><p class="mt-2 font-semibold text-gray-800">${t}</p></div>`).join('');
+
+document.getElementById('features').innerHTML=[{i:"📍",b:"bg-blue-100",t:"입지 히트맵",s:"어디에 열어야 할까?",d:"전국 치과 분포, 인구밀도, 유동인구를 히트맵으로 한눈에 파악하세요."},{i:"📊",b:"bg-green-100",t:"AI 입지 점수",s:"이 자리, 몇 점일까?",d:"인구·경쟁·비용·접근성·성장성 5개 축으로 100점 만점의 객관적 점수를 확인하세요."},{i:"💰",b:"bg-yellow-100",t:"투자 시뮬레이터",s:"얼마가 필요할까?",d:"보증금, 인테리어, 장비, 인건비까지 맞춤형 투자금과 손익분기를 계산합니다."},{i:"⚖️",b:"bg-purple-100",t:"개업 vs 인수",s:"새로 열까, 인수할까?",d:"같은 지역의 신규 개원과 인수 매물을 동시에 비교하고 최적 선택을 안내합니다."},{i:"📋",b:"bg-pink-100",t:"AI 결정 리포트",s:"결정을 도와주는 리포트",d:"점수와 분석을 종합한 AI 리포트로 은행 상담, 파트너 설득에 바로 활용하세요."},{i:"🔜",b:"bg-blue-200",t:"더 많은 기능",s:"계속 업데이트",d:"전문가 매칭, 금융 연계, 개원 후 모니터링... 계속 추가됩니다.",c:true}].map(f=>`<div class="rounded-2xl p-8 transition ${f.c?'bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-dashed border-blue-200':'bg-white shadow-sm hover:shadow-md'}"><div class="w-12 h-12 ${f.b} rounded-xl flex items-center justify-center text-2xl">${f.i}</div><p class="mt-3 text-sm text-blue-600 font-medium">${f.s}</p><h3 class="mt-1 text-xl font-bold ${f.c?'text-blue-700':'text-gray-900'}">${f.t}</h3><p class="mt-2 ${f.c?'text-blue-600':'text-gray-600'} leading-relaxed">${f.d}</p></div>`).join('');
+
+document.getElementById('testimonials').innerHTML=[{q:"부동산 5군데 돌아다닌 것보다 덴트맵 30분이 더 유용했습니다.",n:"김○○ 원장",l:"서울 성동구 개원"},{q:"인수할 뻔한 치과가 점수 42점이었습니다. 덕분에 큰 실수를 피했어요.",n:"이○○ 원장",l:"경기 용인 개원"},{q:"투자금 시뮬레이션 결과를 은행에 제출했더니 대출 상담이 훨씬 수월했습니다.",n:"박○○ 원장",l:"대전 유성구 개원"}].map(t=>`<div class="bg-white rounded-2xl p-8 shadow-sm"><div class="text-yellow-400 text-lg">★★★★★</div><p class="mt-4 text-gray-700 leading-relaxed">&ldquo;${t.q}&rdquo;</p><div class="mt-6 flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">${t.n[0]}</div><div><p class="font-semibold text-sm">${t.n}</p><p class="text-xs text-gray-400">${t.l}</p></div></div></div>`).join('');
+
+document.querySelector('[data-pricing]').innerHTML=buildPricingHTML();
+
+const faqs=[{q:"무료로 어디까지 이용할 수 있나요?",a:"전국 지도 탐색과 월 1회 입지 분석(종합 점수)이 무료입니다."},{q:"분석 데이터는 얼마나 정확한가요?",a:"국민건강보험공단, 통계청, 소상공인진흥공단 등 공공 기관의 공식 데이터를 기반으로 합니다."},{q:"치과 외 다른 의료기관도 분석 가능한가요?",a:"현재는 치과에 특화되어 있습니다. 향후 의과, 한의과, 약국 등으로 확장할 계획입니다."},{q:"구독은 언제든 해지할 수 있나요?",a:"네, 위약금 없이 언제든 해지 가능합니다."},{q:"AI 결정 리포트는 법적 효력이 있나요?",a:"참고 자료이며, 법적 효력이나 보증을 제공하지 않습니다."}];
+document.getElementById('home-faq').innerHTML=faqs.map(f=>`<details class="bg-white rounded-xl shadow-sm group"><summary class="p-6 font-semibold cursor-pointer flex items-center justify-between">${f.q}<svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary><div class="px-6 pb-6 text-gray-600 leading-relaxed">${f.a}</div></details>`).join('');
+</script>
+</body></html>

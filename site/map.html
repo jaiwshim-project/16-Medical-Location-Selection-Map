@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>지도 탐색 — 덴트맵 치과개원 입지분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>html{scroll-behavior:smooth}body{font-family:'Pretendard Variable',sans-serif}</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+<div id="test-banner"></div>
+<div id="app-header"></div>
+
+<div class="min-h-[calc(100vh-4rem)] flex flex-col">
+<!-- Top Bar -->
+<div class="border-b border-gray-100 bg-white px-4 py-3">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-3">
+<div class="relative flex-1 max-w-md w-full">
+<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+<input type="search" id="map-search" placeholder="지역명을 입력하세요 (예: 강남구, 판교)" class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none" oninput="renderMap()">
+</div>
+<div class="flex gap-2 flex-wrap" id="map-filters"></div>
+</div>
+</div>
+<!-- Main -->
+<div class="flex-1 flex flex-col lg:flex-row">
+<div class="flex-1 bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 relative p-6 min-h-[400px]">
+<div class="max-w-4xl mx-auto">
+<div class="text-center mb-6">
+<div class="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full mb-2"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 테스트 모드: 8개 지역 데이터 &middot; 모든 기능 이용 가능</div>
+<p class="text-sm text-gray-500 mb-1">지역을 클릭하면 상세 정보를 확인할 수 있습니다</p>
+<p class="text-xs text-gray-400" id="map-count-info"></p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="map-grid"></div>
+<div id="map-empty" class="hidden text-center py-20 text-gray-400"><p class="text-4xl mb-3">🔍</p><p>해당 조건의 결과가 없습니다. 검색어를 조정해 보세요.</p></div>
+</div>
+</div>
+<aside id="map-side" class="w-full lg:w-[420px] border-l border-gray-100 bg-white overflow-y-auto hidden">
+<div id="map-side-content"></div>
+</aside>
+</div>
+</div>
+
+<div id="app-footer"></div>
+<script src="shared.js"></script>
+<script>
+initPage('map');
+
+let mapFilter='total';
+let mapSelected=null;
+const filterLabels={total:'종합 점수',population:'인구밀도',competition:'경쟁강도',cost:'임대비용',access:'접근성',growth:'성장성'};
+
+function getFilterScore(r,f){return f==='total'?r.scores.total:r.scores[f]}
+
+function initMapFilters(){
+  const filters=[{key:'total',label:'종합 점수'},{key:'population',label:'인구밀도'},{key:'competition',label:'경쟁강도'},{key:'cost',label:'임대비용'},{key:'access',label:'접근성'},{key:'growth',label:'성장성'}];
+  document.getElementById('map-filters').innerHTML=filters.map(f=>'<button onclick="setMapFilter(\''+f.key+'\')" class="map-filter-btn px-3 py-1.5 rounded-full text-xs font-medium transition '+(mapFilter===f.key?'bg-blue-600 text-white':'bg-gray-100 text-gray-600 hover:bg-gray-200')+'" data-filter="'+f.key+'">'+f.label+'</button>').join('');
+}
+
+function setMapFilter(f){mapFilter=f;initMapFilters();renderMap()}
+
+function renderMap(){
+  const search=(document.getElementById('map-search').value||'').trim();
+  let sorted=[...REGIONS].filter(r=>r.dong.includes(search)||r.sigungu.includes(search)||r.sido.includes(search)).sort((a,b)=>getFilterScore(b,mapFilter)-getFilterScore(a,mapFilter));
+
+  document.getElementById('map-count-info').innerHTML='현재 '+sorted.length+'개 지역 데이터 | 기준으로 정렬: <span class="font-semibold text-blue-600">'+filterLabels[mapFilter]+'</span>';
+
+  if(sorted.length===0&&search.length>0){
+    const safe=search.replace(/'/g,"\\'");
+    document.getElementById('map-grid').innerHTML='<div class="col-span-full flex flex-col items-center py-12"><div class="bg-white rounded-2xl shadow-md border-2 border-dashed border-blue-300 p-8 max-w-md w-full text-center"><p class="text-4xl mb-3">🔎</p><p class="text-lg font-bold text-gray-900">「'+search+'」 검색 결과</p><p class="text-sm text-gray-500 mt-2">기존 데이터에 없는 지역입니다.<br>AI가 해당 지역의 예상 분석 데이터를 생성합니다.</p><button onclick="analyzeCustomRegion(\''+safe+'\')" class="mt-5 bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 text-base">「'+search+'」 AI 분석 시작 &rarr;</button><p class="mt-3 text-xs text-gray-400">테스트용 시뮬레이션 데이터가 자동 생성됩니다</p></div></div>';
+    document.getElementById('map-empty').classList.add('hidden');
+    return;
+  }
+  if(sorted.length===0){
+    document.getElementById('map-grid').innerHTML='';
+    document.getElementById('map-empty').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('map-empty').classList.add('hidden');
+
+  document.getElementById('map-grid').innerHTML=sorted.map(r=>{
+    const score=getFilterScore(r,mapFilter);
+    const sel=mapSelected&&mapSelected.dong_code===r.dong_code;
+    return '<button onclick="selectRegion(\''+r.dong_code+'\')" class="text-left bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border-2 '+(sel?'border-blue-600 shadow-blue-100':'border-transparent')+'"><div class="flex items-start justify-between"><div><p class="text-xs text-gray-400">'+r.sido+' '+r.sigungu+'</p><p class="font-bold text-gray-900 mt-0.5">'+r.dong+'</p></div><div class="px-2 py-1 rounded-lg text-xs font-bold '+getGradeColor(r.grade)+'">'+r.grade+'등급</div></div><div class="mt-3 flex items-end justify-between"><div><p class="text-xs text-gray-400">'+(mapFilter==='total'?'종합':filterLabels[mapFilter])+'</p><p class="text-2xl font-bold '+getScoreColor(score)+'">'+score+'점</p></div><div class="text-right text-xs text-gray-500"><p>인구 '+(r.population/10000).toFixed(1)+'만</p><p>치과 '+r.dental_count+'개</p></div></div><div class="mt-2 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full '+getScoreBarColor(score)+'" style="width:'+score+'%"></div></div></button>';
+  }).join('');
+}
+
+function selectRegion(code){
+  const r=REGIONS.find(x=>x.dong_code===code);
+  if(!r)return;
+  mapSelected=r;
+  renderMap();
+  const side=document.getElementById('map-side');
+  side.classList.remove('hidden');
+
+  const axes=[{key:'population',label:'인구/수요',score:r.scores.population},{key:'competition',label:'경쟁 환경',score:r.scores.competition},{key:'cost',label:'비용 효율',score:r.scores.cost},{key:'access',label:'접근성',score:r.scores.access},{key:'growth',label:'성장성',score:r.scores.growth}];
+
+  document.getElementById('map-side-content').innerHTML='<div class="p-6"><button onclick="closeSidePanel()" class="lg:hidden mb-4 text-sm text-gray-500 flex items-center gap-1">&larr; 목록으로</button><div class="flex items-start justify-between"><div><p class="text-sm text-gray-400">'+r.sido+' '+r.sigungu+'</p><h2 class="text-xl font-bold text-gray-900">'+r.dong+'</h2></div><div class="px-3 py-1.5 rounded-lg text-sm font-bold '+getGradeColor(r.grade)+'">'+r.grade+'등급</div></div><div class="mt-5 grid grid-cols-2 gap-3"><div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500">거주인구</p><p class="text-lg font-bold text-gray-900">'+fmt(r.population)+'명</p></div><div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500">치과 수</p><p class="text-lg font-bold text-red-500">'+r.dental_count+'개</p></div><div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500">인구당 치과</p><p class="text-lg font-bold text-gray-900">1:'+fmt(r.pop_per_clinic)+'</p></div><div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500">평균 임대료</p><p class="text-lg font-bold text-gray-900">'+r.avg_rent_pyeong+'만/평</p></div></div><div class="mt-5 bg-blue-50 rounded-xl p-5 text-center"><p class="text-sm text-blue-600 font-medium">종합 입지 점수</p><p class="text-5xl font-bold mt-1 '+getScoreColor(r.scores.total)+'">'+r.scores.total+'</p><p class="text-sm text-blue-500 mt-1">'+r.grade+'등급 &middot; '+(r.scores.total>=80?'우수':r.scores.total>=70?'양호':r.scores.total>=60?'보통':'주의 필요')+'</p></div><div class="mt-5"><h3 class="font-bold text-sm text-gray-700 mb-3">5축 상세 점수</h3><div class="space-y-3">'+axes.map(a=>'<div><div class="flex items-center justify-between mb-1"><span class="text-sm text-gray-600">'+a.label+'</span><span class="text-sm font-bold '+getScoreColor(a.score)+'">'+a.score+'점</span></div><div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-500 '+getScoreBarColor(a.score)+'" style="width:'+a.score+'%"></div></div></div>').join('')+'</div></div><div class="mt-5 space-y-2 text-sm"><div class="flex justify-between py-2 border-b border-gray-50"><span class="text-gray-500">가장 가까운 역</span><span class="font-medium">'+r.subway_station+' ('+r.subway_line+', 도보 '+r.subway_walk_min+'분)</span></div><div class="flex justify-between py-2 border-b border-gray-50"><span class="text-gray-500">일 유동인구</span><span class="font-medium">'+fmt(r.daily_floating)+'명</span></div><div class="flex justify-between py-2 border-b border-gray-50"><span class="text-gray-500">인구 증가율 (3년)</span><span class="font-medium '+(r.pop_growth_rate>0?'text-green-600':'text-red-500')+'">'+(r.pop_growth_rate>0?'+':'')+r.pop_growth_rate+'%</span></div><div class="flex justify-between py-2 border-b border-gray-50"><span class="text-gray-500">상권 등급</span><span class="font-medium">'+r.commercial_grade+'급</span></div><div class="flex justify-between py-2"><span class="text-gray-500">20~39세 비율</span><span class="font-medium">'+r.age_20_39_pct+'%</span></div></div><div class="mt-6 space-y-3"><a href="analysis.html#'+(r._generated?'gen:'+encodeURIComponent(r.dong):r.dong_code)+'" class="block w-full bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition">상세 분석 보기 &rarr;</a></div></div>';
+}
+
+function closeSidePanel(){
+  mapSelected=null;
+  document.getElementById('map-side').classList.add('hidden');
+  renderMap();
+}
+
+function analyzeCustomRegion(name){
+  location.href='analysis.html#gen:'+encodeURIComponent(name);
+}
+
+initMapFilters();
+renderMap();
+</script>
+</body></html>
