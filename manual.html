@@ -936,7 +936,15 @@ function downloadManualPDF(){
     pagebreak:{mode:['avoid-all','css','legacy'],before:'.print-break'}
   };
 
-  html2pdf().set(opt).from(wrapper).save().then(function(){
+  html2pdf().set(opt).from(wrapper).toPdf().get('pdf').then(function(pdf){
+    var totalPages=pdf.internal.getNumberOfPages();
+    for(var i=1;i<=totalPages;i++){
+      pdf.setPage(i);
+      pdf.setFontSize(9);
+      pdf.setTextColor(156,163,175);
+      pdf.text(i+' / '+totalPages,pdf.internal.pageSize.getWidth()-12,pdf.internal.pageSize.getHeight()-8,{align:'right'});
+    }
+  }).save().then(function(){
     btn.innerHTML=origHTML;
     btn.disabled=false;
     btn.style.opacity='1';
