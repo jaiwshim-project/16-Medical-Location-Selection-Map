@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>덴트맵AI 치과개원 입지분석 — 지도 탐색</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif;margin:0;overflow:hidden}
+@keyframes marker-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.5)}70%{box-shadow:0 0 0 12px rgba(245,158,11,0)}}
+.leaflet-container{font-family:'Pretendard Variable',sans-serif;z-index:0}
+.clinic-tooltip{background:white;border:1px solid #e5e7eb;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.12);white-space:nowrap}
+.clinic-tooltip::before{border-right-color:#e5e7eb!important}
+.rec-tooltip{background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;color:#92400e;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+.rec-tooltip::before{border-right-color:#fbbf24!important}
+#map-list::-webkit-scrollbar{width:6px}#map-list::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:6px}
+.map-clinic-card{transition:background 0.15s}.map-clinic-card:hover{background:#eff6ff}
+.map-clinic-card.active{background:#eff6ff;border-left:3px solid #3b82f6}
+.map-legend{background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:0;font-size:12px;line-height:1.6;max-width:200px;color:#374151;overflow:hidden}
+.map-legend h4{font-size:12px;font-weight:700;margin:0;color:#111827;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.map-legend h4 .leg-arrow{transition:transform 0.2s;font-size:10px}
+.map-legend.collapsed h4 .leg-arrow{transform:rotate(-90deg)}
+.map-legend .leg-body{max-height:320px;overflow-y:auto;padding:8px 12px 10px;scrollbar-width:thin}
+.map-legend .leg-body::-webkit-scrollbar{width:4px}
+.map-legend .leg-body::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+.map-legend .leg-section{margin-top:6px;padding-top:5px;border-top:1px solid #f3f4f6}
+.map-legend .leg-section:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.map-legend .leg-title{font-size:10px;font-weight:700;color:#6b7280;letter-spacing:0.5px;margin-bottom:3px}
+.map-legend .leg-row{display:flex;align-items:center;gap:5px;margin:1px 0;font-size:11px}
+.map-legend .leg-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid white;box-shadow:0 1px 2px rgba(0,0,0,0.2);flex-shrink:0}
+.map-legend .leg-badge{padding:0px 5px;border-radius:3px;font-size:9px;font-weight:600;flex-shrink:0}
+.map-legend.collapsed .leg-body{display:none}
+</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-sky-100/90 backdrop-blur border-b border-sky-200">
+<div class="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
+<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴트맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
+<nav class="hidden md:flex items-center gap-8">
+<a href="analysis.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">입지분석</a>
+<span class="text-sm text-blue-600 font-semibold border-b-2 border-blue-600 pb-0.5">지도 탐색</span>
+<a href="pricing.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">요금제</a>
+<a href="reports.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">리포트</a>
+<a href="promo.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">홍보</a>
+<a href="faq.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">FAQ</a>
+<a href="manual.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">사용자 매뉴얼</a>
+</nav>
+<button class="md:hidden p-2 text-blue-800" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+</div>
+<div id="mobile-menu" class="hidden md:hidden border-t border-sky-200 bg-sky-50 px-6 py-4 space-y-3">
+<a href="analysis.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">입지분석</a>
+<span class="block text-blue-600 font-semibold py-2">지도 탐색</span>
+<a href="pricing.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">요금제</a>
+<a href="reports.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">리포트</a>
+<a href="promo.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">홍보</a>
+<a href="faq.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">FAQ</a>
+<a href="manual.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">사용자 매뉴얼</a>
+</div>
+</header>
+
+<!-- MAP LAYOUT -->
+<div style="height:calc(100vh - 4rem)" class="flex">
+<!-- Left Panel -->
+<div class="w-[380px] shrink-0 border-r border-gray-200 flex flex-col bg-white relative z-10 shadow-lg" id="map-left-panel">
+<div class="p-3 border-b border-gray-100">
+<div class="relative"><svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+<input type="search" id="map-search" placeholder="잠실 치과, 강남구, 판교..." class="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" oninput="onMapSearch()">
+<button onclick="document.getElementById('map-search').value='';onMapSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button></div>
+<div class="flex gap-1.5 mt-2 flex-wrap" id="map-filters"></div>
+</div>
+<div class="px-3 py-2 text-xs text-gray-500 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between" id="map-count-info"></div>
+<div class="flex-1 overflow-y-auto" id="map-list"></div>
+</div>
+<!-- Right Panel: Map -->
+<div class="flex-1 relative">
+<div id="explore-map" class="w-full h-full" style="z-index:0"></div>
+</div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+/* ── Mock Data ── */
+const REGIONS=[
+{dong_code:"1168010100",sido:"서울",sigungu:"강남구",dong:"역삼동",population:32450,age_20_39_pct:35,age_40_59_pct:28,age_60_plus_pct:19,dental_count:12,pop_per_clinic:2704,avg_rent_pyeong:18,area_pyeong:40,subway_station:"역삼역",subway_line:"2호선",subway_walk_min:3,bus_stops_500m:8,daily_floating:85000,pop_growth_rate:1.2,commercial_grade:"A",scores:{population:82,competition:55,cost:48,access:91,growth:68,total:72},grade:"B",lat:37.5007,lng:127.0365},
+{dong_code:"1165010700",sido:"서울",sigungu:"서초구",dong:"서초동",population:28300,age_20_39_pct:32,age_40_59_pct:30,age_60_plus_pct:20,dental_count:15,pop_per_clinic:1887,avg_rent_pyeong:20,area_pyeong:40,subway_station:"서초역",subway_line:"2호선",subway_walk_min:5,bus_stops_500m:6,daily_floating:72000,pop_growth_rate:0.8,commercial_grade:"A",scores:{population:75,competition:42,cost:40,access:85,growth:60,total:63},grade:"C",lat:37.4837,lng:127.0073},
+{dong_code:"4146310100",sido:"경기",sigungu:"성남시 분당구",dong:"판교동",population:41200,age_20_39_pct:40,age_40_59_pct:32,age_60_plus_pct:10,dental_count:8,pop_per_clinic:5150,avg_rent_pyeong:12,area_pyeong:40,subway_station:"판교역",subway_line:"신분당선",subway_walk_min:7,bus_stops_500m:5,daily_floating:95000,pop_growth_rate:5.8,commercial_grade:"A",scores:{population:90,competition:82,cost:72,access:75,growth:95,total:85},grade:"A",lat:37.3948,lng:127.1112},
+{dong_code:"1120010300",sido:"서울",sigungu:"성동구",dong:"성수동",population:25600,age_20_39_pct:42,age_40_59_pct:25,age_60_plus_pct:15,dental_count:6,pop_per_clinic:4267,avg_rent_pyeong:14,area_pyeong:35,subway_station:"성수역",subway_line:"2호선",subway_walk_min:4,bus_stops_500m:7,daily_floating:68000,pop_growth_rate:4.2,commercial_grade:"B",scores:{population:78,competition:78,cost:65,access:88,growth:88,total:79},grade:"B",lat:37.5445,lng:127.0564},
+{dong_code:"1174010100",sido:"서울",sigungu:"마포구",dong:"합정동",population:19800,age_20_39_pct:45,age_40_59_pct:22,age_60_plus_pct:14,dental_count:7,pop_per_clinic:2829,avg_rent_pyeong:13,area_pyeong:30,subway_station:"합정역",subway_line:"2·6호선",subway_walk_min:2,bus_stops_500m:9,daily_floating:62000,pop_growth_rate:3.1,commercial_grade:"B",scores:{population:68,competition:65,cost:68,access:95,growth:82,total:74},grade:"B",lat:37.5496,lng:126.9139},
+{dong_code:"4111710100",sido:"경기",sigungu:"수원시 영통구",dong:"광교동",population:52000,age_20_39_pct:38,age_40_59_pct:35,age_60_plus_pct:8,dental_count:10,pop_per_clinic:5200,avg_rent_pyeong:10,area_pyeong:45,subway_station:"광교역",subway_line:"신분당선",subway_walk_min:8,bus_stops_500m:4,daily_floating:45000,pop_growth_rate:7.2,commercial_grade:"B",scores:{population:92,competition:85,cost:80,access:68,growth:98,total:87},grade:"A",lat:37.2935,lng:127.0454},
+{dong_code:"3020011200",sido:"대전",sigungu:"유성구",dong:"봉명동",population:35800,age_20_39_pct:36,age_40_59_pct:28,age_60_plus_pct:16,dental_count:9,pop_per_clinic:3978,avg_rent_pyeong:8,area_pyeong:40,subway_station:"시청역",subway_line:"1호선",subway_walk_min:10,bus_stops_500m:6,daily_floating:38000,pop_growth_rate:2.5,commercial_grade:"B",scores:{population:80,competition:72,cost:88,access:62,growth:75,total:77},grade:"B",lat:36.3623,lng:127.3561},
+{dong_code:"2644010100",sido:"부산",sigungu:"해운대구",dong:"우동",population:48500,age_20_39_pct:30,age_40_59_pct:32,age_60_plus_pct:18,dental_count:14,pop_per_clinic:3464,avg_rent_pyeong:11,area_pyeong:40,subway_station:"해운대역",subway_line:"2호선",subway_walk_min:6,bus_stops_500m:7,daily_floating:55000,pop_growth_rate:1.5,commercial_grade:"A",scores:{population:85,competition:60,cost:75,access:78,growth:65,total:74},grade:"B",lat:35.1631,lng:129.1636}
+];
+
+/* ── Utility ── */
+function fmt(n){return new Intl.NumberFormat('ko-KR').format(n)}
+function getGradeColor(g){return{S:'text-purple-600 bg-purple-50',A:'text-blue-600 bg-blue-50',B:'text-green-600 bg-green-50',C:'text-yellow-600 bg-yellow-50',D:'text-orange-600 bg-orange-50'}[g]||'text-red-600 bg-red-50'}
+function getScoreColor(s){return s>=80?'text-blue-600':s>=60?'text-green-600':s>=40?'text-yellow-600':'text-red-500'}
+function getScoreBarColor(s){return s>=80?'bg-blue-500':s>=60?'bg-green-500':s>=40?'bg-yellow-500':'bg-red-500'}
+function closeMobile(){document.getElementById('mobile-menu').classList.add('hidden')}
+
+/* ── Region Generation ── */
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
+function seededRand(seed,min,max){seed=(seed*9301+49297)%233280;return min+Math.floor((seed/233280)*(max-min+1))}
+function fmtRevKr(v){return v>=10000?((v/10000).toFixed(1)+'억'):(fmt(v)+'만')}
+
+function resolveGeoFromName(name){
+  const areas=[
+    {kw:['대전'],lat:36.3504,lng:126.3845,sido:'대전광역시',
+      gu:[{kw:'중구',lat:36.3254,lng:127.4214},{kw:'서구',lat:36.3555,lng:127.3835},{kw:'동구',lat:36.3121,lng:127.4549},{kw:'유성구',lat:36.3622,lng:127.3561},{kw:'대덕구',lat:36.3467,lng:127.4153}]},
+    {kw:['서울'],lat:37.5665,lng:126.978,sido:'서울특별시',
+      gu:[{kw:'강남구',lat:37.5172,lng:127.0473},{kw:'서초구',lat:37.4837,lng:127.0324},{kw:'송파구',lat:37.5145,lng:127.1050},{kw:'강동구',lat:37.5301,lng:127.1238},{kw:'마포구',lat:37.5664,lng:126.9018},{kw:'용산구',lat:37.5326,lng:126.9906},{kw:'종로구',lat:37.5735,lng:126.9790},{kw:'중구',lat:37.5641,lng:126.9979},{kw:'영등포구',lat:37.5264,lng:126.8963},{kw:'강서구',lat:37.5510,lng:126.8495},{kw:'구로구',lat:37.4954,lng:126.8874},{kw:'관악구',lat:37.4784,lng:126.9516},{kw:'동작구',lat:37.5124,lng:126.9393},{kw:'성동구',lat:37.5634,lng:127.0369},{kw:'광진구',lat:37.5385,lng:127.0823},{kw:'동대문구',lat:37.5744,lng:127.0396},{kw:'중랑구',lat:37.6063,lng:127.0926},{kw:'성북구',lat:37.5894,lng:127.0164},{kw:'강북구',lat:37.6397,lng:127.0253},{kw:'도봉구',lat:37.6688,lng:127.0471},{kw:'노원구',lat:37.6542,lng:127.0568},{kw:'은평구',lat:37.6027,lng:126.9291},{kw:'서대문구',lat:37.5791,lng:126.9368},{kw:'양천구',lat:37.5170,lng:126.8664},{kw:'금천구',lat:37.4569,lng:126.8955}]},
+    {kw:['부산'],lat:35.1796,lng:129.0756,sido:'부산광역시',
+      gu:[{kw:'해운대구',lat:35.1631,lng:129.1636},{kw:'부산진구',lat:35.1631,lng:129.0533},{kw:'동래구',lat:35.2050,lng:129.0858},{kw:'남구',lat:35.1368,lng:129.0845},{kw:'중구',lat:35.1060,lng:129.0325},{kw:'서구',lat:35.0982,lng:129.0244},{kw:'북구',lat:35.1974,lng:129.0312},{kw:'사상구',lat:35.1526,lng:128.9912},{kw:'연제구',lat:35.1762,lng:129.0801},{kw:'수영구',lat:35.1458,lng:129.1133},{kw:'금정구',lat:35.2432,lng:129.0913},{kw:'사하구',lat:35.1046,lng:128.9747},{kw:'강서구',lat:35.2121,lng:128.9809}]},
+    {kw:['인천'],lat:37.4563,lng:126.7052,sido:'인천광역시',
+      gu:[{kw:'남동구',lat:37.4488,lng:126.7369},{kw:'부평구',lat:37.5076,lng:126.7219},{kw:'연수구',lat:37.4101,lng:126.6783},{kw:'서구',lat:37.5451,lng:126.6760},{kw:'중구',lat:37.4738,lng:126.6217},{kw:'미추홀구',lat:37.4421,lng:126.6993},{kw:'계양구',lat:37.5372,lng:126.7376}]},
+    {kw:['대구'],lat:35.8714,lng:128.6014,sido:'대구광역시',
+      gu:[{kw:'중구',lat:35.8694,lng:128.6064},{kw:'수성구',lat:35.8583,lng:128.6315},{kw:'달서구',lat:35.8299,lng:128.5327},{kw:'북구',lat:35.8858,lng:128.5828},{kw:'동구',lat:35.8864,lng:128.6355},{kw:'서구',lat:35.8718,lng:128.5592},{kw:'남구',lat:35.8460,lng:128.5975}]},
+    {kw:['광주'],lat:35.1595,lng:126.8526,sido:'광주광역시',
+      gu:[{kw:'서구',lat:35.1522,lng:126.8895},{kw:'북구',lat:35.1744,lng:126.9120},{kw:'남구',lat:35.1326,lng:126.9024},{kw:'동구',lat:35.1461,lng:126.9231},{kw:'광산구',lat:35.1395,lng:126.7938}]},
+    {kw:['울산'],lat:35.5384,lng:129.3114,sido:'울산광역시',
+      gu:[{kw:'남구',lat:35.5444,lng:129.3303},{kw:'중구',lat:35.5694,lng:129.3327},{kw:'동구',lat:35.5050,lng:129.4166},{kw:'북구',lat:35.5826,lng:129.3610},{kw:'울주군',lat:35.5224,lng:129.2441}]},
+    {kw:['세종'],lat:36.4801,lng:126.9270,sido:'세종특별자치시',gu:[]},
+    {kw:['수원'],lat:37.2636,lng:127.0286,sido:'경기도',gu:[{kw:'영통구',lat:37.2596,lng:127.0462},{kw:'팔달구',lat:37.2829,lng:127.0204},{kw:'장안구',lat:37.3038,lng:127.0101},{kw:'권선구',lat:37.2572,lng:126.9719}]},
+    {kw:['성남'],lat:37.4200,lng:127.1267,sido:'경기도',gu:[{kw:'분당구',lat:37.3825,lng:127.1188},{kw:'수정구',lat:37.4504,lng:127.1457},{kw:'중원구',lat:37.4317,lng:127.1372}]},
+    {kw:['고양'],lat:37.6584,lng:126.8320,sido:'경기도',gu:[{kw:'일산동구',lat:37.6586,lng:126.7742},{kw:'일산서구',lat:37.6756,lng:126.7513},{kw:'덕양구',lat:37.6376,lng:126.8320}]},
+    {kw:['용인'],lat:37.2411,lng:127.1775,sido:'경기도',gu:[{kw:'수지구',lat:37.3219,lng:127.0981},{kw:'기흥구',lat:37.2802,lng:127.1151},{kw:'처인구',lat:37.2342,lng:127.2019}]},
+    {kw:['창원'],lat:35.2280,lng:128.6811,sido:'경상남도',gu:[{kw:'성산구',lat:35.1989,lng:128.7119},{kw:'의창구',lat:35.2538,lng:128.6389},{kw:'마산합포구',lat:35.1855,lng:128.5683},{kw:'마산회원구',lat:35.2215,lng:128.5813},{kw:'진해구',lat:35.1336,lng:128.7107}]},
+    {kw:['청주'],lat:36.6424,lng:127.4890,sido:'충청북도',gu:[{kw:'흥덕구',lat:36.6373,lng:127.4329},{kw:'서원구',lat:36.6093,lng:127.4712},{kw:'상당구',lat:36.6539,lng:127.4901},{kw:'청원구',lat:36.6952,lng:127.4879}]},
+    {kw:['전주'],lat:35.8242,lng:127.1480,sido:'전라북도',gu:[{kw:'완산구',lat:35.8123,lng:127.1365},{kw:'덕진구',lat:35.8423,lng:127.1344}]},
+    {kw:['천안'],lat:36.8151,lng:127.1139,sido:'충청남도',gu:[{kw:'서북구',lat:36.8502,lng:127.1435},{kw:'동남구',lat:36.7889,lng:127.1652}]},
+    {kw:['안산'],lat:37.3219,lng:126.8309,sido:'경기도',gu:[{kw:'상록구',lat:37.3004,lng:126.8461},{kw:'단원구',lat:37.3184,lng:126.7962}]},
+    {kw:['안양'],lat:37.3943,lng:126.9568,sido:'경기도',gu:[{kw:'만안구',lat:37.3866,lng:126.9327},{kw:'동안구',lat:37.3929,lng:126.9517}]},
+    {kw:['제주'],lat:33.4996,lng:126.5312,sido:'제주특별자치도',gu:[{kw:'제주시',lat:33.5100,lng:126.5219},{kw:'서귀포시',lat:33.2532,lng:126.5597}]},
+    {kw:['포항'],lat:36.0190,lng:129.3435,sido:'경상북도',gu:[{kw:'남구',lat:35.9987,lng:129.3652},{kw:'북구',lat:36.0441,lng:129.3719}]},
+    {kw:['김해'],lat:35.2285,lng:128.8894,sido:'경상남도',gu:[]},
+    {kw:['평택'],lat:36.9921,lng:127.0866,sido:'경기도',gu:[]},
+    {kw:['파주'],lat:37.7599,lng:126.7801,sido:'경기도',gu:[]},
+    {kw:['시흥'],lat:37.3800,lng:126.8028,sido:'경기도',gu:[]},
+    {kw:['화성'],lat:37.1994,lng:126.8313,sido:'경기도',gu:[]},
+    {kw:['김포'],lat:37.6152,lng:126.7156,sido:'경기도',gu:[]},
+    {kw:['광명'],lat:37.4786,lng:126.8645,sido:'경기도',gu:[]},
+    {kw:['군포'],lat:37.3614,lng:126.9352,sido:'경기도',gu:[]},
+    {kw:['하남'],lat:37.5393,lng:127.2147,sido:'경기도',gu:[]},
+    {kw:['양산'],lat:35.3350,lng:129.0372,sido:'경상남도',gu:[]},
+    {kw:['구미'],lat:36.1197,lng:128.3440,sido:'경상북도',gu:[]},
+    {kw:['춘천'],lat:37.8813,lng:127.7300,sido:'강원특별자치도',gu:[]},
+    {kw:['원주'],lat:37.3423,lng:127.9202,sido:'강원특별자치도',gu:[]},
+    {kw:['강릉'],lat:37.7519,lng:128.8761,sido:'강원특별자치도',gu:[]},
+    {kw:['여수'],lat:34.7604,lng:127.6622,sido:'전라남도',gu:[]},
+    {kw:['순천'],lat:34.9506,lng:127.4872,sido:'전라남도',gu:[]},
+    {kw:['목포'],lat:34.8118,lng:126.3922,sido:'전라남도',gu:[]},
+    {kw:['익산'],lat:35.9483,lng:126.9577,sido:'전라북도',gu:[]},
+    {kw:['군산'],lat:35.9674,lng:126.7369,sido:'전라북도',gu:[]},
+    {kw:['경주'],lat:35.8562,lng:129.2247,sido:'경상북도',gu:[]},
+    {kw:['거제'],lat:34.8806,lng:128.6213,sido:'경상남도',gu:[]},
+    {kw:['양주'],lat:37.7854,lng:127.0456,sido:'경기도',gu:[]},
+    {kw:['의정부'],lat:37.7381,lng:127.0337,sido:'경기도',gu:[]},
+    {kw:['남양주'],lat:37.6360,lng:127.2163,sido:'경기도',gu:[]},
+    {kw:['이천'],lat:37.2720,lng:127.4348,sido:'경기도',gu:[]},
+    {kw:['오산'],lat:37.1498,lng:127.0697,sido:'경기도',gu:[]},
+    {kw:['광주시','경기 광주'],lat:37.4095,lng:127.2551,sido:'경기도',gu:[]},
+    {kw:['충주'],lat:36.9910,lng:127.9259,sido:'충청북도',gu:[]},
+    {kw:['아산'],lat:36.7899,lng:127.0018,sido:'충청남도',gu:[]},
+    {kw:['서산'],lat:36.7845,lng:126.4503,sido:'충청남도',gu:[]},
+    {kw:['홍대','홍대입구'],lat:37.5563,lng:126.9237,sido:'서울특별시',gu:[]},
+    {kw:['잠실'],lat:37.5133,lng:127.1001,sido:'서울특별시',gu:[]},
+    {kw:['강남'],lat:37.4979,lng:127.0276,sido:'서울특별시',gu:[]},
+    {kw:['판교'],lat:37.3947,lng:127.1112,sido:'경기도',gu:[]}
+  ];
+  let baseLat=37.5665,baseLng=126.978,sido='',sigungu='';
+  for(const a of areas){
+    const cityMatch=a.kw.some(k=>name.includes(k));
+    if(cityMatch){
+      baseLat=a.lat;baseLng=a.lng;sido=a.sido;
+      for(const g of a.gu){
+        if(name.includes(g.kw)){baseLat=g.lat;baseLng=g.lng;sigungu=g.kw;break}
+      }
+      if(!sigungu&&a.kw[0])sigungu=a.kw[0];
+      break;
+    }
+  }
+  return{lat:baseLat,lng:baseLng,sido:sido,sigungu:sigungu};
+}
+
+function generateRegion(name){
+  const h=hashStr(name),r=n=>(a,b)=>seededRand(h*n+n,a,b);
+  const geo=resolveGeoFromName(name);
+  const pop=r(1)(15000,60000),dental=r(2)(3,18),rent=r(3)(6,22),area=r(4)(25,50),wk=r(5)(2,15),bus=r(6)(2,10),fl=r(7)(20000,100000);
+  const gr=parseFloat(((r(8)(0,80)-20)/10).toFixed(1)),a20=r(9)(25,48),a40=r(10)(20,35),a60=Math.max(0,100-a20-a40);
+  const ps=Math.min(100,Math.max(30,Math.round(pop/600)+r(11)(-5,5))),cs=Math.min(100,Math.max(20,100-dental*5+r(12)(-5,10)));
+  const co=Math.min(100,Math.max(20,100-rent*3+r(13)(-5,5))),ac=Math.min(100,Math.max(30,100-wk*4+bus*3+r(14)(-5,5)));
+  const gs=Math.min(100,Math.max(20,50+Math.round(gr*8)+r(15)(-5,5)));
+  const tot=Math.round(ps*0.25+cs*0.25+co*0.2+ac*0.15+gs*0.15);
+  const gd=tot>=80?'A':tot>=70?'B':tot>=60?'C':'D';
+  const localStations=geo.sido.includes('대전')?['대전역','유성온천역','탄방역','시청역','중앙로역','대동역','정부청사역','갈마역','월평역','용문역']:
+    geo.sido.includes('부산')?['서면역','해운대역','부산역','남포동역','센텀시티역','동래역','덕천역','사상역','연산역','수영역']:
+    geo.sido.includes('대구')?['반월당역','동대구역','중앙로역','수성구청역','범어역','달서구청역','성당못역','두류역','칠성시장역','만평역']:
+    geo.sido.includes('인천')?['부평역','인천역','구월역','간석역','인천시청역','주안역','송도역','청라역','작전역','부개역']:
+    geo.sido.includes('광주')?['상무역','금남로역','양동시장역','운천역','송정역','첨단역','평동역','녹동역','학동역','남광주역']:
+    geo.sido.includes('울산')?['울산역','태화강역','신복역','덕하역','남창역','울산KTX역','효문역','야음역','선암역','장생포역']:
+    ['역삼역','강남역','홍대입구역','신촌역','잠실역','건대입구역','사당역','왕십리역','을지로역','종각역','신림역','판교역','수원역','인천역'];
+  const lns=geo.sido.includes('대전')?['1호선','대전1호선']:geo.sido.includes('부산')?['1호선','2호선','3호선','4호선','동해선']:geo.sido.includes('대구')?['1호선','2호선','3호선']:geo.sido.includes('광주')?['1호선']:['2호선','3호선','4호선','7호선','9호선','신분당선','경의중앙선','1호선','5호선','6호선'];
+  const cg=['A','B','C'];
+  const jitter=0.002;
+  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true};
+}
+
+function addGeneratedRegion(name){
+  const ex=REGIONS.find(r=>r.dong===name&&r._generated);if(ex)return ex;
+  const r=generateRegion(name);REGIONS.push(r);return r;
+}
+
+/* ── Leaflet Map Legend ── */
+function addMapLegend(map,type){
+  const legend=L.control({position:'bottomright'});
+  legend.onAdd=function(){
+    const div=L.DomUtil.create('div','map-legend collapsed');
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    let h='<h4 onclick="this.parentElement.classList.toggle(\'collapsed\')"><span>범례</span><span class="leg-arrow">▼</span></h4><div class="leg-body">';
+    h+='<div class="leg-section"><div class="leg-title">마커</div>';
+    if(type==='explore'){
+      h+='<div class="leg-row"><div class="leg-dot" style="background:#3b82f6"></div>점수 80+ (높음)</div>';
+      h+='<div class="leg-row"><div class="leg-dot" style="background:#22c55e"></div>점수 70+ (양호)</div>';
+      h+='<div class="leg-row"><div class="leg-dot" style="background:#eab308"></div>점수 60+ (보통)</div>';
+      h+='<div class="leg-row"><div class="leg-dot" style="background:#ef4444"></div>점수 60- (낮음)</div>';
+    } else {
+      h+='<div class="leg-row"><div class="leg-dot" style="background:#3b82f6"></div>분석 중심</div>';
+    }
+    h+='<div class="leg-row"><div class="leg-dot" style="background:#ef4444"></div>영업중 치과</div>';
+    h+='<div class="leg-row"><div class="leg-dot" style="background:#eab308"></div>휴업 치과</div>';
+    h+='<div class="leg-row"><div class="leg-dot" style="background:#9ca3af"></div>폐업 치과</div>';
+    h+='<div class="leg-row"><div class="leg-dot" style="background:linear-gradient(135deg,#f59e0b,#d97706)"></div>추천 개원 위치</div>';
+    h+='</div>';
+    h+='<div class="leg-section"><div class="leg-title">상태 배지</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:3px">';
+    h+='<span class="leg-badge" style="background:#dcfce7;color:#166534">영업중</span>';
+    h+='<span class="leg-badge" style="background:#fef9c3;color:#854d0e">휴업</span>';
+    h+='<span class="leg-badge" style="background:#fee2e2;color:#991b1b">폐업</span>';
+    h+='<span class="leg-badge" style="background:#ede9fe;color:#6d28d9">인수가능</span>';
+    h+='</div></div>';
+    h+='<div class="leg-section"><div class="leg-title">경쟁 위협도</div>';
+    h+='<div class="leg-row"><span style="color:#dc2626;font-weight:700;font-size:10px">●</span> 높음</div>';
+    h+='<div class="leg-row"><span style="color:#d97706;font-weight:700;font-size:10px">●</span> 보통</div>';
+    h+='<div class="leg-row"><span style="color:#16a34a;font-weight:700;font-size:10px">●</span> 낮음</div>';
+    h+='</div>';
+    h+='<div class="leg-section"><div class="leg-title">구분 배지</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:3px">';
+    h+='<span class="leg-badge" style="background:#e0f2fe;color:#0369a1">진료비</span>';
+    h+='<span class="leg-badge" style="background:#f3e8ff;color:#7c3aed">진료시간</span>';
+    h+='<span class="leg-badge" style="background:#f0fdf4;color:#15803d">전문분야</span>';
+    h+='</div></div>';
+    h+='<div class="leg-section"><div class="leg-title">매출·인수</div>';
+    h+='<div class="leg-row"><span class="leg-badge" style="background:#ecfdf5;color:#059669">연/월매출</span> 추정 매출</div>';
+    h+='<div class="leg-row"><span class="leg-badge" style="background:#f5f3ff;color:#7c3aed">인수가</span> 예상 인수가</div>';
+    h+='</div>';
+    h+='</div>';
+    div.innerHTML=h;
+    return div;
+  };
+  legend.addTo(map);
+  return legend;
+}
+
+/* ── Clinic Functions ── */
+function clinicStatusBadge(c){
+  const sc=c.status==='영업중'?'background:#dcfce7;color:#166534':c.status==='휴업'?'background:#fef9c3;color:#854d0e':'background:#fee2e2;color:#991b1b';
+  return '<span style="'+sc+';padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">'+c.status+'</span>';
+}
+function clinicForSaleBadge(c){
+  return c.forSale?'<span style="background:#ede9fe;color:#6d28d9;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;margin-left:3px">인수가능</span>':'';
+}
+function nightWeekendLabel(nw){return nw===2?'야간+주말':nw===1?'주말진료':'평일만'}
+
+function buildClinicPopup(c){
+  const r='<div style="min-width:260px;max-width:300px;font-family:Pretendard Variable,sans-serif;font-size:12px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="font-size:14px;color:#1d4ed8">'+c.name+'</b><div>'+clinicStatusBadge(c)+clinicForSaleBadge(c)+'</div></div>'
+    +'<div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:3px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">'+c.type+'</span>'
+    +'<span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-size:11px">'+c.priceLevel+'</span>'
+    +'<span style="background:#f3e8ff;color:#7c3aed;padding:1px 6px;border-radius:4px;font-size:11px">'+nightWeekendLabel(c.nightWeekend)+'</span></div>'
+    +'<div style="color:#4b5563">'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>원장</span><b>'+c.director+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>개원</span><b>'+c.estYear+'년 ('+c.yearsOpen+'년차)</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>규모</span><b>체어 '+c.chairs+'대 · '+c.size+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>위치</span><b>'+c.floor+(c.hasParking?' · 🅿️':'')+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>인력</span><b>의사 '+c.dentistCount+'명 · 위생사 '+c.hygienistCount+'명 · 총 '+c.totalStaff+'명</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>일평균 환자</span><b>'+c.dailyPatients+'명</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>보험청구</span><b>월 '+fmt(c.insuranceClaims)+'건 (비급여 '+c.nonCoverageRatio+'%)</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>네이버</span><b style="color:#f59e0b">★ '+c.naverRating+' <span style="color:#9ca3af;font-weight:400">('+fmt(c.naverReviewCount)+'건)</span></b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>블로그 노출</span><b>'+fmt(c.blogExposure)+'건</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>경쟁 위협도</span><b style="color:'+(c.competitionThreat==='높음'?'#dc2626':c.competitionThreat==='보통'?'#d97706':'#16a34a')+'">'+c.competitionThreat+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6"><span>동종 경쟁</span><b>반경 내 '+c.sameTypeNearby+'개</b></div>'
+    +'</div>'
+    +'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px">'+c.specialties.map(function(sp){return '<span style="background:#f0fdf4;color:#15803d;padding:1px 5px;border-radius:3px;font-size:10px">'+sp+'</span>'}).join('')+'</div>'
+    +'<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;background:#ecfdf5;margin:6px -8px -8px;padding:8px;border-radius:0 0 4px 4px">'
+    +'<div style="display:flex;justify-content:space-between;color:#059669;font-weight:600"><span>연매출</span><b>약 '+fmtRevKr(c.annualRevenue)+'원</b></div>'
+    +'<div style="display:flex;justify-content:space-between;color:#059669;font-size:11px;margin-top:2px"><span>월매출</span><b>약 '+fmtRevKr(c.monthlyRevenue)+'원</b></div>'
+    +(c.forSale&&c.estimatedAcquisitionPrice?'<div style="display:flex;justify-content:space-between;color:#7c3aed;font-weight:600;margin-top:4px;padding-top:4px;border-top:1px dashed #c4b5fd"><span>예상 인수가</span><b>약 '+fmtRevKr(c.estimatedAcquisitionPrice)+'원</b></div>':'')
+    +'</div></div>';
+  return r;
+}
+
+function generateNearbyClinics(r){
+  const h=hashStr(r.dong_code||r.dong),cnt=r.dental_count||8,clinics=[];
+  const types=['일반치과','교정치과','소아치과','임플란트치과','심미치과','통합치과'];
+  const pfx=['서울','미소','해피','스마일','연세','이든','푸른','맑은','새봄','하나','온','빛','늘','좋은','밝은','참'];
+  const dirs=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황'];
+  const specPool=['임플란트','치아교정','심미보철','소아진료','잇몸치료','충치치료','미백','턱관절','사랑니발치','치아성형','투명교정','라미네이트'];
+  for(let i=0;i<cnt;i++){const s=h*100+i;
+    const chairs=seededRand(s*29,2,8),sz=seededRand(s*41,15,60),ey=2024-seededRand(s*19,1,15);
+    const yearsOpen=2024-ey;
+    const yrFactor=Math.min(1.3,1+Math.max(0,yearsOpen-3)*0.02);
+    const annRev=Math.round((chairs*7000+sz*120+seededRand(s*43,-3000,8000))*yrFactor);
+    const monthlyRev=Math.round(annRev/12);
+    const dailyPat=Math.max(5,Math.round(chairs*seededRand(s*47,3,7)+seededRand(s*51,-3,5)));
+    const dentistCnt=Math.max(1,Math.round(chairs/2.5)+seededRand(s*53,-1,1));
+    const hygienistCnt=Math.max(1,Math.round(chairs*0.8)+seededRand(s*57,-1,1));
+    const totalStaff=dentistCnt+hygienistCnt+Math.max(1,seededRand(s*59,1,Math.round(chairs*0.5)+1));
+    const insClaims=Math.round(dailyPat*22*seededRand(s*61,60,85)/100);
+    const nonCovRatio=seededRand(s*63,25,65);
+    const naverRating=(seededRand(s*67,30,50)/10).toFixed(1);
+    const naverReviewCnt=Math.round(yearsOpen*seededRand(s*69,15,80)+seededRand(s*71,0,100));
+    const blogExposure=seededRand(s*73,50,2000);
+    const specCnt=seededRand(s*75,2,5);
+    const specs=[];for(let j=0;j<specCnt;j++){const sp=specPool[seededRand(s*77+j*13,0,specPool.length-1)];if(!specs.includes(sp))specs.push(sp)}
+    const nightWeekend=seededRand(s*79,0,2);
+    const priceLvl=['저가','중간','고가'][seededRand(s*81,0,2)];
+    const threatLvl=chairs>=5&&yearsOpen>=5?'높음':chairs>=3?'보통':'낮음';
+    const sameTypeNearby=seededRand(s*83,0,Math.min(4,cnt-1));
+    const statusRand=seededRand(s*85,0,20);
+    const status=statusRand>=2?'영업중':statusRand===1?'휴업':'폐업';
+    const forSale=status==='폐업'?true:status==='휴업'?seededRand(s*87,0,1)===1:seededRand(s*89,0,8)===0;
+    const estAcqPrice=forSale?Math.round(annRev*seededRand(s*91,8,18)/10):null;
+    clinics.push({name:pfx[seededRand(s*11,0,pfx.length-1)]+'치과의원',type:types[seededRand(s*13,0,types.length-1)],
+      director:dirs[seededRand(s*17,0,dirs.length-1)]+'원장',lat:r.lat+(seededRand(s*3,-70,70))/10000,lng:r.lng+(seededRand(s*7,-70,70))/10000,
+      estYear:ey,rating:(seededRand(s*23,32,50)/10).toFixed(1),chairs:chairs,
+      hasParking:seededRand(s*31,0,1)===1,floor:seededRand(s*37,1,8)+'층',size:sz+'평',annualRevenue:annRev,
+      monthlyRevenue:monthlyRev,dailyPatients:dailyPat,dentistCount:dentistCnt,hygienistCount:hygienistCnt,
+      totalStaff:totalStaff,insuranceClaims:insClaims,nonCoverageRatio:nonCovRatio,
+      naverRating:naverRating,naverReviewCount:naverReviewCnt,blogExposure:blogExposure,
+      specialties:specs,nightWeekend:nightWeekend,priceLevel:priceLvl,yearsOpen:yearsOpen,
+      competitionThreat:threatLvl,sameTypeNearby:sameTypeNearby,
+      status:status,forSale:forSale,estimatedAcquisitionPrice:estAcqPrice})}
+  return clinics;
+}
+
+function generateRecommendedSpots(r){
+  const h=hashStr(r.dong+'_rec'),spots=[];
+  const reasons=[['경쟁 공백 지역 — 반경 300m 내 치과 없음','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴','주차장 확보 용이']];
+  for(let i=0;i<2;i++){const s=h*50+i,angle=(seededRand(s,0,360)*Math.PI)/180,dist=seededRand(s*3,40,70)/10000;
+    spots.push({lat:r.lat+Math.cos(angle)*dist,lng:r.lng+Math.sin(angle)*dist,
+      label:i===0?'추천 위치 A (최적)':'추천 위치 B (대안)',
+      score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*5),
+      grade:i===0?'S':'A',reasons:reasons[i],
+      rent:Math.max(5,r.avg_rent_pyeong-seededRand(s*9,1,4)),estPop:seededRand(s*11,8000,25000)})}
+  return spots;
+}
+
+/* ── Explore Map ── */
+let exploreMap=null,exploreMarkers=[],mapCurrentRegion=null,mapClinicData=null;
+
+function renderExploreMap(){
+  if(exploreMap){exploreMap.remove();exploreMap=null}
+  const el=document.getElementById('explore-map');if(!el||typeof L==='undefined')return;
+  exploreMap=L.map('explore-map',{scrollWheelZoom:true,zoomControl:true}).setView([36.5,127.5],7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18}).addTo(exploreMap);
+  addMapLegend(exploreMap,'explore');
+  showAllRegionsOnMap();
+}
+
+function showAllRegionsOnMap(){
+  if(!exploreMap)return;
+  exploreMarkers.forEach(m=>exploreMap.removeLayer(m));exploreMarkers=[];
+  const search=(document.getElementById('map-search')?document.getElementById('map-search').value:'').trim();
+  const filtered=REGIONS.filter(r=>!r._generated&&(!search||r.dong.includes(search)||r.sigungu.includes(search)||r.sido.includes(search)));
+  filtered.forEach(r=>{
+    const sc=r.scores.total,color=sc>=80?'#3b82f6':sc>=70?'#22c55e':sc>=60?'#eab308':'#ef4444';
+    const m=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+color+';color:white;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer">'+sc+'</div>',iconSize:[40,40],iconAnchor:[20,20]})}).addTo(exploreMap);
+    m.bindTooltip(r.dong,{permanent:true,direction:'top',offset:[0,-22],className:'clinic-tooltip'});
+    m.on('click',()=>selectMapRegion(r));
+    exploreMarkers.push(m);
+  });
+  if(filtered.length>1)exploreMap.fitBounds(filtered.map(r=>[r.lat,r.lng]),{padding:[50,50]});
+  else if(filtered.length===1)exploreMap.setView([filtered[0].lat,filtered[0].lng],14);
+}
+
+function showRegionClinicsOnMap(r,clinics,spots){
+  if(!exploreMap)return;
+  exploreMarkers.forEach(m=>exploreMap.removeLayer(m));exploreMarkers=[];
+  /* center */
+  const cm=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div style="background:#3b82f6;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,0.5)">📍</div>',iconSize:[36,36],iconAnchor:[18,18]})}).addTo(exploreMap);
+  cm.bindPopup('<b>'+r.dong+'</b> 분석 중심<br>종합 <b style="color:#3b82f6">'+r.scores.total+'점</b>');
+  exploreMarkers.push(cm);
+  /* clinics with permanent name labels */
+  clinics.forEach((c,i)=>{
+    const mColor=c.status==='영업중'?'#ef4444':c.status==='휴업'?'#eab308':'#9ca3af';
+    const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+mColor+';color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)">🦷</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(exploreMap);
+    m.bindTooltip(c.name+(c.forSale?' 🏷':''),{permanent:true,direction:'right',offset:[10,0],className:'clinic-tooltip'});
+    m.bindPopup(buildClinicPopup(c),{maxWidth:320});
+    m.on('click',()=>{highlightClinicCard(i)});
+    exploreMarkers.push(m);
+  });
+  /* recommended spots */
+  spots.forEach(s=>{
+    const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="position:relative"><div style="position:absolute;inset:-6px;background:rgba(245,158,11,0.2);border-radius:50%;animation:marker-pulse 2s infinite"></div><div style="position:relative;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(245,158,11,0.5)">⭐</div></div>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(exploreMap);
+    m.bindTooltip(s.label,{permanent:true,direction:'right',offset:[10,0],className:'rec-tooltip'});
+    m.bindPopup('<div style="min-width:200px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴트맵 추천</div><div style="font-weight:bold;margin-top:6px">'+s.label+'</div><div style="font-size:24px;font-weight:bold;color:#3b82f6;margin:4px 0">'+s.score+'점 <span style="font-size:12px;color:#6b7280">'+s.grade+'등급</span></div><div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px">'+s.reasons.map(x=>'✅ '+x).join('<br>')+'</div></div>');
+    exploreMarkers.push(m);
+  });
+  const pts=[[r.lat,r.lng],...clinics.map(c=>[c.lat,c.lng]),...spots.map(s=>[s.lat,s.lng])];
+  exploreMap.fitBounds(pts,{padding:[60,60]});
+}
+
+function highlightClinicCard(idx){
+  document.querySelectorAll('.map-clinic-card').forEach((el,i)=>{el.classList.toggle('active',i===idx)});
+  const el=document.querySelectorAll('.map-clinic-card')[idx];
+  if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function focusClinicOnMap(lat,lng,idx){
+  if(exploreMap)exploreMap.setView([lat,lng],17,{animate:true});
+  if(exploreMarkers[idx+1])exploreMarkers[idx+1].openPopup();/*+1 because center marker is [0]*/
+  highlightClinicCard(idx);
+}
+
+/* ── Filter State ── */
+let mapFilter='total',mapSelected=null;
+const filterLabels={total:'종합 점수',population:'인구밀도',competition:'경쟁강도',cost:'임대비용',access:'접근성',growth:'성장성'};
+function getFilterScore(r,f){return f==='total'?r.scores.total:r.scores[f]}
+
+/* ── Map Filters & Region List ── */
+function initMapFilters(){
+  const fs=[{k:'total',l:'종합'},{k:'population',l:'인구'},{k:'competition',l:'경쟁'},{k:'cost',l:'비용'},{k:'access',l:'접근성'},{k:'growth',l:'성장성'}];
+  const el=document.getElementById('map-filters');if(!el)return;
+  el.innerHTML='<button onclick="backToRegionList()" class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">치과</button>'+fs.map(f=>'<button onclick="setMapFilter(\''+f.k+'\')" class="px-2.5 py-1 rounded-full text-xs font-medium transition border '+(mapFilter===f.k?'border-blue-600 text-blue-600 bg-blue-50':'border-gray-200 text-gray-500 hover:bg-gray-50')+'">'+f.l+'</button>').join('');
+}
+
+function setMapFilter(f){mapFilter=f;initMapFilters();if(mapCurrentRegion)selectMapRegion(mapCurrentRegion);else renderRegionList()}
+
+function onMapSearch(){
+  const v=(document.getElementById('map-search').value||'').trim();
+  if(!v){mapCurrentRegion=null;renderRegionList();showAllRegionsOnMap();return}
+  const matches=REGIONS.filter(r=>r.dong.includes(v)||r.sigungu.includes(v)||r.sido.includes(v));
+  if(matches.length===1){selectMapRegion(matches[0]);return}
+  if(matches.length>1){mapCurrentRegion=null;renderRegionList(matches);showAllRegionsOnMap();return}
+  /* no match → AI analyze prompt */
+  document.getElementById('map-count-info').innerHTML='「'+v+'」 검색 결과 없음';
+  document.getElementById('map-list').innerHTML='<div class="flex flex-col items-center py-16 px-6 text-center"><div class="text-4xl mb-3">🔎</div><p class="font-bold text-gray-800 text-lg">「'+v+'」</p><p class="text-sm text-gray-500 mt-2">기존 데이터에 없는 지역입니다.<br>AI가 분석 데이터를 생성합니다.</p><button onclick="window.location.href=\'analysis.html?q='+encodeURIComponent(v)+'\'" class="mt-4 bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-blue-700 transition text-sm">「'+v+'」 AI 분석 시작 →</button></div>';
+}
+
+function renderRegionList(regions){
+  regions=regions||REGIONS.filter(r=>!r._generated);
+  const sorted=[...regions].sort((a,b)=>getFilterScore(b,mapFilter)-getFilterScore(a,mapFilter));
+  document.getElementById('map-count-info').innerHTML='<span>'+sorted.length+'개 지역</span><span class="text-blue-600 font-medium">'+filterLabels[mapFilter]+' 순</span>';
+  let h='';sorted.forEach(r=>{const sc=getFilterScore(r,mapFilter);const color=sc>=80?'#3b82f6':sc>=70?'#22c55e':sc>=60?'#eab308':'#ef4444';
+    h+='<div onclick="selectMapRegion(REGIONS.find(x=>x.dong_code===\''+r.dong_code+'\'))" class="p-4 border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition">'
+    +'<div class="flex items-start justify-between"><div><h3 class="font-bold text-blue-700 text-[15px]">'+r.dong+'</h3><p class="text-xs text-gray-500 mt-0.5">'+r.sido+' '+r.sigungu+'</p></div><div class="px-2 py-0.5 rounded text-xs font-bold" style="background:'+color+'15;color:'+color+'">'+r.grade+'등급</div></div>'
+    +'<div class="flex items-center gap-4 mt-2 text-xs text-gray-500"><span>'+filterLabels[mapFilter]+' <b class="text-gray-900">'+sc+'점</b></span><span>인구 '+(r.population/10000).toFixed(1)+'만</span><span>치과 <b class="text-red-500">'+r.dental_count+'</b>개</span></div>'
+    +'<div class="mt-2 w-full h-1 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:'+sc+'%;background:'+color+'"></div></div></div>'
+  });
+  document.getElementById('map-list').innerHTML=h;
+}
+
+function selectMapRegion(r){
+  if(!r)return;mapCurrentRegion=r;mapSelected=r;
+  const clinics=generateNearbyClinics(r),spots=generateRecommendedSpots(r);
+  mapClinicData={clinics,spots};
+  renderClinicListPanel(r,clinics,spots);
+  showRegionClinicsOnMap(r,clinics,spots);
+}
+
+function renderClinicListPanel(r,clinics,spots){
+  /* Build analysis link: for known regions use analysis.html?q=dong, for generated the same */
+  const analysisLink='analysis.html?q='+encodeURIComponent(r.dong);
+  document.getElementById('map-count-info').innerHTML='<span>'+r.dong+' 치과 '+clinics.length+'개</span><span class="text-amber-600 font-medium">추천 '+spots.length+'곳</span>';
+  let h='';
+  /* region header */
+  h+='<div class="p-4 bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-blue-200">'
+  +'<button onclick="backToRegionList()" class="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1 mb-2"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>전체 지역</button>'
+  +'<div class="flex items-center justify-between"><div><h2 class="font-bold text-lg text-gray-900">'+r.dong+'</h2><p class="text-xs text-gray-500">'+r.sido+' '+r.sigungu+' · 인구 '+fmt(r.population)+'명 · 치과 '+r.dental_count+'개</p></div>'
+  +'<div class="text-right"><p class="text-2xl font-bold '+getScoreColor(r.scores.total)+'">'+r.scores.total+'</p><p class="text-xs text-gray-400">'+r.grade+'등급</p></div></div>'
+  +'<a href="'+analysisLink+'" class="mt-3 block text-center bg-blue-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-blue-700 transition">상세 분석 보기 →</a></div>';
+  /* recommended spots */
+  spots.forEach(s=>{
+    h+='<div class="p-4 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50/50">'
+    +'<div class="flex items-center gap-1.5 mb-1"><span class="text-sm">⭐</span><span class="text-[11px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">덴트맵 추천 개원 위치</span></div>'
+    +'<h3 class="font-bold text-amber-900 text-sm">'+s.label+'</h3>'
+    +'<div class="flex items-baseline gap-2 mt-0.5"><span class="text-xl font-bold text-blue-600">'+s.score+'점</span><span class="text-[11px] text-gray-400">'+s.grade+'등급</span></div>'
+    +'<p class="text-xs text-gray-600 mt-1">'+s.reasons.slice(0,2).join(' · ')+'</p>'
+    +'<p class="text-[11px] text-gray-400 mt-0.5">예상 임대료 '+s.rent+'만/평 · 주변인구 '+fmt(s.estPop)+'명</p></div>';
+  });
+  /* clinics */
+  clinics.forEach((c,i)=>{
+    const stBg=c.status==='영업중'?'bg-green-50 text-green-700':c.status==='휴업'?'bg-yellow-50 text-yellow-700':'bg-red-50 text-red-700';
+    const threatColor=c.competitionThreat==='높음'?'text-red-600':c.competitionThreat==='보통'?'text-amber-600':'text-green-600';
+    h+='<div class="map-clinic-card p-4 border-b border-gray-100 cursor-pointer" onclick="focusClinicOnMap('+c.lat+','+c.lng+','+i+')">'
+    +'<div class="flex gap-3"><div class="flex-1 min-w-0">'
+    +'<div class="flex items-center gap-1.5 flex-wrap"><h3 class="font-bold text-blue-700 text-[14px]">'+c.name+'</h3>'
+    +'<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded '+stBg+'">'+c.status+'</span>'
+    +(c.forSale?'<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">인수가능</span>':'')+'</div>'
+    +'<div class="flex flex-wrap gap-1 mt-1"><span class="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded">'+c.type+'</span>'
+    +'<span class="text-[10px] bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded">'+c.priceLevel+'</span>'
+    +'<span class="text-[10px] bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded">'+nightWeekendLabel(c.nightWeekend)+'</span></div>'
+    +'<p class="text-xs text-gray-500 mt-1">'+c.director+' · '+c.estYear+'년 개원 ('+c.yearsOpen+'년차)</p>'
+    +'<p class="text-xs text-gray-400">'+c.floor+' · '+c.size+(c.hasParking?' · 🅿️':'')+'</p>'
+    +'<div class="flex items-center gap-2 mt-1"><span class="text-xs text-yellow-600">★ '+c.naverRating+' ('+fmt(c.naverReviewCount)+')</span><span class="text-xs text-gray-400">체어 '+c.chairs+'대</span></div>'
+    +'<div class="flex items-center gap-2 mt-0.5"><span class="text-xs text-gray-500">의사 '+c.dentistCount+' · 위생사 '+c.hygienistCount+' · 총 '+c.totalStaff+'명</span></div>'
+    +'<div class="flex items-center gap-2 mt-0.5"><span class="text-xs text-gray-500">일 '+c.dailyPatients+'명 · 보험 '+fmt(c.insuranceClaims)+'건/월 · 비급여 '+c.nonCoverageRatio+'%</span></div>'
+    +'<div class="flex flex-wrap gap-1 mt-1">'+c.specialties.map(function(sp){return '<span class="text-[10px] bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded">'+sp+'</span>'}).join('')+'</div>'
+    +'<div class="flex items-center gap-2 mt-1.5">'
+    +'<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">연 '+fmtRevKr(c.annualRevenue)+'원</span>'
+    +'<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">월 '+fmtRevKr(c.monthlyRevenue)+'원</span></div>'
+    +'<div class="flex items-center gap-2 mt-0.5"><span class="text-[10px] '+threatColor+' font-medium">경쟁위협 '+c.competitionThreat+'</span><span class="text-[10px] text-gray-400">동종 '+c.sameTypeNearby+'개 · 블로그 '+fmt(c.blogExposure)+'건</span></div>'
+    +(c.forSale&&c.estimatedAcquisitionPrice?'<div class="mt-1"><span class="text-[11px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">예상 인수가 약 '+fmtRevKr(c.estimatedAcquisitionPrice)+'원</span></div>':'')
+    +'</div><div class="w-[52px] h-[52px] rounded-lg flex items-center justify-center text-2xl shrink-0 '+(c.status==='영업중'?'bg-red-50':'bg-gray-100')+'">🦷</div></div>'
+    +'<div class="flex gap-1.5 mt-2.5">'
+    +'<button onclick="event.stopPropagation();focusClinicOnMap('+c.lat+','+c.lng+','+i+')" class="text-[11px] border border-gray-200 text-gray-600 rounded-full px-2.5 py-1 hover:bg-gray-50">📍 위치</button>'
+    +'<button class="text-[11px] border border-blue-200 text-blue-600 rounded-full px-2.5 py-1 hover:bg-blue-50">🗺️ 도착</button>'
+    +'<button class="text-[11px] border border-gray-200 text-gray-600 rounded-full px-2.5 py-1 hover:bg-gray-50">📞 문의</button>'
+    +'</div></div>';
+  });
+  document.getElementById('map-list').innerHTML=h;
+}
+
+function backToRegionList(){mapCurrentRegion=null;mapSelected=null;document.getElementById('map-search').value='';renderRegionList();showAllRegionsOnMap()}
+
+/* ── Init on page load ── */
+document.addEventListener('DOMContentLoaded',function(){
+  initMapFilters();
+  renderRegionList();
+  renderExploreMap();
+});
+</script>
+
+<!-- FOOTER -->
+<footer class="bg-gray-900 text-gray-400 py-12"><div class="max-w-7xl mx-auto px-6">
+<div class="grid md:grid-cols-4 gap-8">
+<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴트맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="analysis.html" class="block hover:text-white transition">입지분석</a><a href="map.html" class="block hover:text-white transition">지도 탐색</a><a href="pricing.html" class="block hover:text-white transition">요금제</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="faq.html" class="block hover:text-white transition">자주 묻는 질문</a><a href="manual.html" class="block hover:text-white transition">사용자 매뉴얼</a><a href="index.html" class="block hover:text-white transition">홈으로</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>심재우 대표</p><p><a href="mailto:jaiwshim@gmail.com" class="hover:text-white">jaiwshim@gmail.com</a></p><p><a href="tel:010-2397-5734" class="hover:text-white">010-2397-5734</a></p></div></div>
+</div>
+<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴트맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> · <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
+</div></footer>
+
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>덴트맵AI 치과개원 입지분석 — 데이터로 찾는 최적의 치과 개원 입지</title>
+<title>덴트맵 입지 분석 — 치과개원 입지분석</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -12,7 +12,6 @@
 <style>
 html{scroll-behavior:smooth}
 body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
-.page-section{display:none}.page-section.active{display:block}
 details summary::-webkit-details-marker{display:none}
 details summary{list-style:none}
 input[type=range]{cursor:pointer}
@@ -24,9 +23,6 @@ input[type=range]{cursor:pointer}
 .clinic-tooltip::before{border-right-color:#e5e7eb!important}
 .rec-tooltip{background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;color:#92400e;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
 .rec-tooltip::before{border-right-color:#fbbf24!important}
-#map-list::-webkit-scrollbar{width:6px}#map-list::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:6px}
-.map-clinic-card{transition:background 0.15s}.map-clinic-card:hover{background:#eff6ff}
-.map-clinic-card.active{background:#eff6ff;border-left:3px solid #3b82f6}
 .map-legend{background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:0;font-size:12px;line-height:1.6;max-width:200px;color:#374151;overflow:hidden}
 .map-legend h4{font-size:12px;font-weight:700;margin:0;color:#111827;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
 .map-legend h4 .leg-arrow{transition:transform 0.2s;font-size:10px}
@@ -45,153 +41,50 @@ input[type=range]{cursor:pointer}
 </head>
 <body class="antialiased bg-white text-gray-900">
 
-<!-- TEST BANNER -->
-<div class="bg-green-600 text-white text-center py-2 text-sm font-medium">🧪 테스트 모드 — 로그인 없이 모든 기능을 자유롭게 체험하세요 &nbsp;|&nbsp; <a href="#map" class="underline font-bold hover:text-green-100">바로 분석 시작 &rarr;</a></div>
-
 <!-- HEADER -->
 <header class="sticky top-0 z-50 bg-sky-100/90 backdrop-blur border-b border-sky-200">
 <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-<a href="#home" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴트맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
+<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴트맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
 <nav class="hidden md:flex items-center gap-8">
-<a href="analysis.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">입지분석</a>
-<a href="#map" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">지도 탐색</a>
-<a href="#pricing" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">요금제</a>
+<span class="text-sm text-blue-600 font-semibold border-b-2 border-blue-600 pb-0.5">입지분석</span>
+<a href="map.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">지도 탐색</a>
+<a href="pricing.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">요금제</a>
 <a href="reports.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">리포트</a>
 <a href="promo.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">홍보</a>
-<a href="#faq" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">FAQ</a>
+<a href="faq.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">FAQ</a>
 <a href="manual.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">사용자 매뉴얼</a>
 </nav>
-<div class="hidden md:flex items-center gap-3"><a href="#map" class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">바로 체험하기</a></div>
+<div class="hidden md:flex items-center gap-3"><a href="map.html" class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">바로 체험하기</a></div>
 <button class="md:hidden p-2 text-blue-800" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 </div>
 <div id="mobile-menu" class="hidden md:hidden border-t border-sky-200 bg-sky-50 px-6 py-4 space-y-3">
-<a href="analysis.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">입지분석</a>
-<a href="#map" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">지도 탐색</a>
-<a href="#pricing" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">요금제</a>
-<a href="reports.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">리포트</a>
-<a href="promo.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">홍보</a>
-<a href="#faq" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">FAQ</a>
-<a href="manual.html" class="block text-blue-800 font-medium py-2" onclick="closeMobile()">사용자 매뉴얼</a>
+<span class="block text-blue-600 font-semibold py-2">입지분석</span>
+<a href="map.html" class="block text-blue-800 font-medium py-2">지도 탐색</a>
+<a href="pricing.html" class="block text-blue-800 font-medium py-2">요금제</a>
+<a href="reports.html" class="block text-blue-800 font-medium py-2">리포트</a>
+<a href="promo.html" class="block text-blue-800 font-medium py-2">홍보</a>
+<a href="faq.html" class="block text-blue-800 font-medium py-2">FAQ</a>
+<a href="manual.html" class="block text-blue-800 font-medium py-2">사용자 매뉴얼</a>
 <hr class="border-gray-100">
-<a href="#map" class="block bg-blue-600 text-white text-center py-2.5 rounded-lg font-semibold" onclick="closeMobile()">바로 체험하기</a>
+<a href="map.html" class="block bg-blue-600 text-white text-center py-2.5 rounded-lg font-semibold">바로 체험하기</a>
 </div>
 </header>
 
 <main>
-
-<!-- ══ HOME ══ -->
-<div id="page-home" class="page-section">
-<section class="relative min-h-[85vh] flex items-center bg-gradient-to-br from-white via-blue-50/30 to-white">
-<div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 py-20">
-<div class="flex flex-col justify-center">
-<div class="inline-flex items-center gap-2 bg-green-50 text-green-700 text-sm font-medium px-4 py-2 rounded-full w-fit mb-6"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> 테스트 모드 — 로그인 없이 모든 기능 체험 가능</div>
-<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">개원,<br>감이 아니라<br><span class="text-blue-600">데이터</span>로.</h1>
-<p class="mt-6 text-lg text-gray-600 leading-relaxed">인구, 경쟁, 임대료, 교통, 성장성 &mdash;<br class="hidden sm:block">5가지 핵심 데이터를 AI가 분석하고,<br class="hidden sm:block">선생님에게 딱 맞는 개원 입지를 추천합니다.</p>
-<div class="mt-8"><div class="flex flex-col sm:flex-row gap-2 max-w-lg">
-<div class="relative flex-1"><svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-<input id="quick-search" type="text" placeholder="분석할 지역명 입력 (예: 잠실역, 홍대, 수원)" class="w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition" onkeydown="if(event.key==='Enter')quickAnalyze()"></div>
-<button onclick="quickAnalyze()" class="bg-blue-600 text-white text-lg font-semibold px-8 py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 whitespace-nowrap">분석하기</button>
-</div></div>
-<p class="mt-3 text-sm text-gray-400">아무 지역이나 입력하세요 — 로그인 없이 바로 AI 분석 결과를 확인할 수 있습니다</p>
-</div>
-<div class="relative hidden md:block">
-<div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
-<div class="flex items-center gap-2 mb-4"><div class="w-3 h-3 rounded-full bg-red-400"></div><div class="w-3 h-3 rounded-full bg-yellow-400"></div><div class="w-3 h-3 rounded-full bg-green-400"></div><span class="ml-3 text-xs text-gray-400">dentmap.co.kr/map</span></div>
-<div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl h-48 flex items-center justify-center text-gray-400 text-sm mb-4"><div class="text-center"><div class="text-4xl mb-2">🗺️</div><span>전국 입지 히트맵</span></div></div>
-<div class="grid grid-cols-3 gap-3"><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">인구</p><p class="text-lg font-bold text-blue-600">32,450</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">경쟁</p><p class="text-lg font-bold text-orange-500">12개</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">종합</p><p class="text-lg font-bold text-green-600">81점</p></div></div>
-</div>
-<div class="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-gray-100 p-4"><p class="text-sm text-gray-500">종합 점수</p><p class="text-3xl font-bold text-blue-600">81점</p><p class="text-xs text-green-600 font-medium">A등급 &middot; 상위 15%</p></div>
-</div>
-</div>
-</section>
-<section class="bg-gray-50 py-10 border-y border-gray-100"><div class="max-w-5xl mx-auto px-6 flex flex-wrap justify-center gap-8 md:gap-16"><div class="text-center"><p class="text-2xl md:text-3xl font-bold">3,200+</p><p class="text-sm text-gray-500 mt-1">분석 완료</p></div><div class="text-center"><p class="text-2xl md:text-3xl font-bold">1,500+</p><p class="text-sm text-gray-500 mt-1">가입 원장</p></div><div class="text-center"><p class="text-2xl md:text-3xl font-bold">4.7/5.0</p><p class="text-sm text-gray-500 mt-1">평균 만족도</p></div><div class="text-center"><p class="text-2xl md:text-3xl font-bold">15종+</p><p class="text-sm text-gray-500 mt-1">분석 데이터</p></div></div></section>
-<section class="py-20"><div class="max-w-4xl mx-auto px-6 text-center"><h2 class="text-3xl md:text-4xl font-bold">치과 원장 10명 중 7명,<br><span class="text-red-500">&ldquo;입지 선정이 가장 어려웠다&rdquo;</span></h2><div class="mt-12 grid md:grid-cols-2 gap-4" id="problems-grid"></div><p class="mt-10 text-xl text-blue-600 font-semibold">덴트맵은 이 모든 과정을 데이터로 바꿉니다.</p></div></section>
-<section class="py-20 bg-gray-50"><div class="max-w-6xl mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center">개원의 모든 숫자, 한눈에.</h2><div class="mt-16 grid md:grid-cols-3 gap-8" id="features-grid"></div></div></section>
-<section class="py-20"><div class="max-w-5xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">3단계로 시작하세요</h2><div class="mt-16 grid md:grid-cols-3 gap-12"><div class="text-center"><div class="w-16 h-16 mx-auto bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-600/20">1</div><h3 class="mt-5 font-bold text-lg">프로필 입력</h3><p class="mt-2 text-gray-600">경력, 예산, 관심 지역을 30초 만에 입력하세요</p></div><div class="text-center"><div class="w-16 h-16 mx-auto bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-600/20">2</div><h3 class="mt-5 font-bold text-lg">지도 탐색</h3><p class="mt-2 text-gray-600">히트맵으로 유망 지역을 한눈에 파악하세요</p></div><div class="text-center"><div class="w-16 h-16 mx-auto bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-600/20">3</div><h3 class="mt-5 font-bold text-lg">리포트 확인</h3><p class="mt-2 text-gray-600">AI가 분석한 입지 점수와 투자 계획을 받아보세요</p></div></div></div></section>
-<section class="py-20 bg-gray-50"><div class="max-w-5xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">먼저 경험한 원장님들의 이야기</h2><div class="mt-12 grid md:grid-cols-3 gap-8" id="testimonials-grid"></div></div></section>
-<section class="py-20" id="home-pricing"></section>
-<section class="py-20 bg-gray-50"><div class="max-w-3xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">자주 묻는 질문</h2><div class="mt-12 space-y-4" id="home-faq"></div></div></section>
-<section class="py-20 bg-blue-600 text-white"><div class="max-w-3xl mx-auto px-6 text-center"><h2 class="text-3xl md:text-4xl font-bold">아직 감으로 입지를 고르고 계신가요?</h2><p class="mt-4 text-blue-100 text-lg">지금 시작하면 1개 지역 무료 분석이 제공됩니다.<br>데이터가 보여주는 최적의 자리를 직접 확인해 보세요.</p><a href="#map" class="mt-8 inline-block bg-white text-blue-600 font-bold px-10 py-4 rounded-xl text-lg hover:shadow-lg transition">지금 바로 체험하기 &rarr;</a><p class="mt-3 text-sm text-blue-200">로그인 없이 모든 분석 기능을 사용해 보세요</p></div></section>
-</div>
-
-<!-- ══ MAP ══ -->
-<div id="page-map" class="page-section">
-<div style="height:calc(100vh - 5rem)" class="flex">
-<!-- Left Panel -->
-<div class="w-[380px] shrink-0 border-r border-gray-200 flex flex-col bg-white relative z-10 shadow-lg" id="map-left-panel">
-<div class="p-3 border-b border-gray-100">
-<div class="relative"><svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-<input type="search" id="map-search" placeholder="잠실 치과, 강남구, 판교..." class="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" oninput="onMapSearch()">
-<button onclick="document.getElementById('map-search').value='';onMapSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button></div>
-<div class="flex gap-1.5 mt-2 flex-wrap" id="map-filters"></div>
-</div>
-<div class="px-3 py-2 text-xs text-gray-500 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between" id="map-count-info"></div>
-<div class="flex-1 overflow-y-auto" id="map-list"></div>
-</div>
-<!-- Right Panel: Map -->
-<div class="flex-1 relative">
-<div id="explore-map" class="w-full h-full" style="z-index:0"></div>
-</div>
-</div>
-</div>
-
-<!-- ══ ANALYSIS ══ -->
-<div id="page-analysis" class="page-section"><div id="analysis-content"></div></div>
-
-<!-- ══ PRICING ══ -->
-<div id="page-pricing" class="page-section">
-<div id="pricing-full"></div>
-<section class="py-16 bg-gray-50"><div class="max-w-4xl mx-auto px-6"><h2 class="text-2xl font-bold text-center mb-8">플랜 상세 비교</h2><div class="overflow-x-auto" id="pricing-table"></div></div></section>
-<section class="py-16"><div class="max-w-2xl mx-auto px-6 text-center"><h2 class="text-2xl font-bold">어떤 플랜이 맞는지 모르겠다면?</h2><p class="mt-3 text-gray-600">테스트 모드에서 모든 플랜의 기능을 바로 체험할 수 있습니다.</p><a href="#map" class="mt-6 inline-block bg-blue-600 text-white font-semibold px-8 py-3 rounded-xl hover:bg-blue-700 transition">바로 체험하기 &rarr;</a></div></section>
-</div>
-
-<!-- ══ LOGIN ══ -->
-<div id="page-login" class="page-section">
-<section class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12"><div class="max-w-md w-full mx-auto px-6">
-<div class="text-center mb-8"><a href="#home" class="inline-flex items-center gap-2 mb-6"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold">D</span></div><span class="font-bold text-2xl">덴트맵AI <span class="text-lg font-semibold text-gray-500">치과개원 입지분석</span></span></a><h1 class="text-2xl font-bold">로그인</h1><p class="text-gray-500 mt-2">다시 오신 것을 환영합니다</p></div>
-<div class="bg-green-50 border border-green-200 rounded-xl p-5 mb-6"><div class="flex items-start gap-3"><span class="text-2xl">🧪</span><div><p class="font-bold text-green-800">테스트 모드 활성화</p><p class="text-sm text-green-700 mt-1">로그인 없이 모든 기능을 체험할 수 있습니다.</p><a href="#map" class="mt-3 inline-block bg-green-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-green-700 transition text-sm">로그인 없이 바로 체험하기 &rarr;</a></div></div></div>
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 opacity-60 pointer-events-none"><form class="space-y-5"><div><label class="block text-sm font-medium text-gray-700 mb-1">이메일</label><input type="email" placeholder="이메일" class="w-full px-4 py-3 border border-gray-200 rounded-lg" disabled></div><div><label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label><input type="password" placeholder="비밀번호" class="w-full px-4 py-3 border border-gray-200 rounded-lg" disabled></div><button type="button" class="w-full bg-gray-400 text-white font-semibold py-3 rounded-lg cursor-not-allowed">로그인 (테스트 모드에서 비활성)</button></form></div>
-</div></section>
-</div>
-
-<!-- ══ REGISTER ══ -->
-<div id="page-register" class="page-section">
-<section class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12"><div class="max-w-md w-full mx-auto px-6">
-<div class="text-center mb-8"><a href="#home" class="inline-flex items-center gap-2 mb-6"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold">D</span></div><span class="font-bold text-2xl">덴트맵AI <span class="text-lg font-semibold text-gray-500">치과개원 입지분석</span></span></a><h1 class="text-2xl font-bold">30초면 시작할 수 있습니다</h1><p class="text-gray-500 mt-2">무료로 가입하고 첫 번째 입지를 분석해 보세요</p></div>
-<div class="bg-green-50 border border-green-200 rounded-xl p-5 mb-6"><div class="flex items-start gap-3"><span class="text-2xl">🧪</span><div><p class="font-bold text-green-800">테스트 모드 활성화</p><p class="text-sm text-green-700 mt-1">회원가입 없이 모든 분석 기능을 바로 사용할 수 있습니다.</p><a href="#map" class="mt-3 inline-block bg-green-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-green-700 transition text-sm">바로 지도 탐색 시작 &rarr;</a></div></div></div>
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 opacity-60 pointer-events-none"><div class="space-y-3"><button class="w-full flex items-center justify-center gap-3 border border-gray-200 py-3 rounded-lg text-sm cursor-not-allowed"><span class="text-lg">💬</span> 카카오로 3초 만에 시작</button><button class="w-full flex items-center justify-center gap-3 border border-gray-200 py-3 rounded-lg text-sm cursor-not-allowed"><span class="text-lg font-bold text-green-500">N</span> 네이버로 시작</button></div><div class="my-6 flex items-center gap-3"><div class="flex-1 border-t border-gray-200"></div><span class="text-xs text-gray-400">또는 이메일로 가입</span><div class="flex-1 border-t border-gray-200"></div></div><form class="space-y-5"><div><label class="block text-sm font-medium text-gray-700 mb-1">이름</label><input type="text" placeholder="이름" class="w-full px-4 py-3 border border-gray-200 rounded-lg" disabled></div><div><label class="block text-sm font-medium text-gray-700 mb-1">이메일</label><input type="email" placeholder="이메일" class="w-full px-4 py-3 border border-gray-200 rounded-lg" disabled></div><div><label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label><input type="password" placeholder="8자 이상" class="w-full px-4 py-3 border border-gray-200 rounded-lg" disabled></div><button type="button" class="w-full bg-gray-400 text-white font-semibold py-3 rounded-lg cursor-not-allowed">회원가입 (테스트 모드에서 비활성)</button></form></div>
-</div></section>
-</div>
-
-<!-- ══ FAQ ══ -->
-<div id="page-faq" class="page-section">
-<section class="py-16"><div class="max-w-3xl mx-auto px-6"><div class="text-center mb-12"><h1 class="text-3xl md:text-4xl font-bold">자주 묻는 질문</h1><p class="mt-3 text-gray-500">궁금한 점이 있으시면 아래에서 찾아보세요</p></div><div id="faq-full-content"></div></div></section>
-<section class="py-12 bg-gray-50"><div class="max-w-2xl mx-auto px-6 text-center"><h2 class="text-xl font-bold">찾으시는 답변이 없으신가요?</h2><p class="mt-2 text-gray-600">고객센터로 문의해 주시면 빠르게 답변드리겠습니다.</p><div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center"><a href="#contact" class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">문의하기</a><a href="mailto:jaiwshim@gmail.com" class="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition">이메일: jaiwshim@gmail.com</a></div></div></section>
-</div>
-
-<!-- ══ CONTACT ══ -->
-<div id="page-contact" class="page-section">
-<section class="py-16"><div class="max-w-3xl mx-auto px-6">
-<div class="text-center mb-12"><h1 class="text-3xl md:text-4xl font-bold">문의하기</h1><p class="mt-3 text-gray-500">궁금한 점이나 제안 사항이 있으시면 언제든 연락해 주세요</p></div>
-<div class="grid md:grid-cols-3 gap-6 mb-12"><div class="bg-blue-50 rounded-xl p-6 text-center"><div class="text-3xl mb-3">📧</div><h3 class="font-semibold">이메일</h3><p class="text-sm text-gray-600 mt-1">jaiwshim@gmail.com</p><p class="text-xs text-gray-400 mt-1">24시간 내 답변</p></div><div class="bg-green-50 rounded-xl p-6 text-center"><div class="text-3xl mb-3">📞</div><h3 class="font-semibold">전화</h3><p class="text-sm text-gray-600 mt-1">010-2397-5734</p><p class="text-xs text-gray-400 mt-1">평일 10:00~18:00</p></div><div class="bg-yellow-50 rounded-xl p-6 text-center"><div class="text-3xl mb-3">💬</div><h3 class="font-semibold">카카오톡</h3><p class="text-sm text-gray-600 mt-1">@dentmap</p><p class="text-xs text-gray-400 mt-1">실시간 상담</p></div></div>
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8"><h2 class="text-xl font-bold mb-6">문의 양식</h2><form class="space-y-5" onsubmit="return false"><div class="grid md:grid-cols-2 gap-5"><div><label class="block text-sm font-medium text-gray-700 mb-1">이름</label><input type="text" placeholder="이름" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"></div><div><label class="block text-sm font-medium text-gray-700 mb-1">이메일</label><input type="email" placeholder="이메일" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"></div></div><div><label class="block text-sm font-medium text-gray-700 mb-1">문의 유형</label><select class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-gray-600"><option value="" disabled selected>문의 유형 선택</option><option>서비스 이용</option><option>요금 및 결제</option><option>기술 지원</option><option>제휴/파트너십</option><option>기타</option></select></div><div><label class="block text-sm font-medium text-gray-700 mb-1">문의 내용</label><textarea rows="5" placeholder="문의 내용을 적어주세요" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none resize-none"></textarea></div><button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">문의 보내기</button></form></div>
-</div></section>
-</div>
-
+<div id="analysis-root"></div>
 </main>
 
 <!-- FOOTER -->
 <footer class="bg-gray-900 text-gray-400 py-12"><div class="max-w-7xl mx-auto px-6">
 <div class="grid md:grid-cols-4 gap-8">
 <div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴트맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
-<div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="#map" class="block hover:text-white transition">지도 탐색</a><a href="#pricing" class="block hover:text-white transition">요금제</a></div></div>
-<div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="#faq" class="block hover:text-white transition">자주 묻는 질문</a><a href="manual.html" class="block hover:text-white transition">사용자 매뉴얼</a><a href="#contact" class="block hover:text-white transition">문의하기</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="map.html" class="block hover:text-white transition">지도 탐색</a><a href="pricing.html" class="block hover:text-white transition">요금제</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="faq.html" class="block hover:text-white transition">자주 묻는 질문</a><a href="manual.html" class="block hover:text-white transition">사용자 매뉴얼</a><a href="index.html" class="block hover:text-white transition">홈으로</a></div></div>
 <div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>심재우 대표</p><p><a href="mailto:jaiwshim@gmail.com" class="hover:text-white">jaiwshim@gmail.com</a></p><p><a href="tel:010-2397-5734" class="hover:text-white">010-2397-5734</a></p></div></div>
 </div>
 <div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴트맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> · <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
 </div></footer>
 
-<!-- ═══ JAVASCRIPT ═══ -->
 <script>
 /* ── Mock Data ── */
 const REGIONS=[
@@ -211,7 +104,6 @@ function getGradeColor(g){return{S:'text-purple-600 bg-purple-50',A:'text-blue-6
 function getScoreColor(s){return s>=80?'text-blue-600':s>=60?'text-green-600':s>=40?'text-yellow-600':'text-red-500'}
 function getScoreBarColor(s){return s>=80?'bg-blue-500':s>=60?'bg-green-500':s>=40?'bg-yellow-500':'bg-red-500'}
 function formatPrice(p){return p===0?'0':fmt(p)}
-function closeMobile(){document.getElementById('mobile-menu').classList.add('hidden')}
 
 /* ── Region Generation ── */
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
@@ -527,105 +419,6 @@ function renderClinicList(r,clinics,spots){
   el.innerHTML=h;
 }
 
-/* ── Explore Map (네이버 지도 스타일) ── */
-let exploreMap=null,exploreMarkers=[],mapCurrentRegion=null,mapClinicData=null;
-function renderExploreMap(){
-  if(exploreMap){exploreMap.remove();exploreMap=null}
-  const el=document.getElementById('explore-map');if(!el||typeof L==='undefined')return;
-  exploreMap=L.map('explore-map',{scrollWheelZoom:true,zoomControl:true}).setView([36.5,127.5],7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18}).addTo(exploreMap);
-  addMapLegend(exploreMap,'explore');
-  showAllRegionsOnMap();
-}
-function showAllRegionsOnMap(){
-  if(!exploreMap)return;
-  exploreMarkers.forEach(m=>exploreMap.removeLayer(m));exploreMarkers=[];
-  const search=(document.getElementById('map-search')?document.getElementById('map-search').value:'').trim();
-  const filtered=REGIONS.filter(r=>!r._generated&&(!search||r.dong.includes(search)||r.sigungu.includes(search)||r.sido.includes(search)));
-  filtered.forEach(r=>{
-    const sc=r.scores.total,color=sc>=80?'#3b82f6':sc>=70?'#22c55e':sc>=60?'#eab308':'#ef4444';
-    const m=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+color+';color:white;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer">'+sc+'</div>',iconSize:[40,40],iconAnchor:[20,20]})}).addTo(exploreMap);
-    m.bindTooltip(r.dong,{permanent:true,direction:'top',offset:[0,-22],className:'clinic-tooltip'});
-    m.on('click',()=>selectMapRegion(r));
-    exploreMarkers.push(m);
-  });
-  if(filtered.length>1)exploreMap.fitBounds(filtered.map(r=>[r.lat,r.lng]),{padding:[50,50]});
-  else if(filtered.length===1)exploreMap.setView([filtered[0].lat,filtered[0].lng],14);
-}
-function showRegionClinicsOnMap(r,clinics,spots){
-  if(!exploreMap)return;
-  exploreMarkers.forEach(m=>exploreMap.removeLayer(m));exploreMarkers=[];
-  /* center */
-  const cm=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div style="background:#3b82f6;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,0.5)">📍</div>',iconSize:[36,36],iconAnchor:[18,18]})}).addTo(exploreMap);
-  cm.bindPopup('<b>'+r.dong+'</b> 분석 중심<br>종합 <b style="color:#3b82f6">'+r.scores.total+'점</b>');
-  exploreMarkers.push(cm);
-  /* clinics with permanent name labels */
-  clinics.forEach((c,i)=>{
-    const mColor=c.status==='영업중'?'#ef4444':c.status==='휴업'?'#eab308':'#9ca3af';
-    const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+mColor+';color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)">🦷</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(exploreMap);
-    m.bindTooltip(c.name+(c.forSale?' 🏷':''),{permanent:true,direction:'right',offset:[10,0],className:'clinic-tooltip'});
-    m.bindPopup(buildClinicPopup(c),{maxWidth:320});
-    m.on('click',()=>{highlightClinicCard(i)});
-    exploreMarkers.push(m);
-  });
-  /* recommended spots */
-  spots.forEach(s=>{
-    const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="position:relative"><div style="position:absolute;inset:-6px;background:rgba(245,158,11,0.2);border-radius:50%;animation:marker-pulse 2s infinite"></div><div style="position:relative;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(245,158,11,0.5)">⭐</div></div>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(exploreMap);
-    m.bindTooltip(s.label,{permanent:true,direction:'right',offset:[10,0],className:'rec-tooltip'});
-    m.bindPopup('<div style="min-width:200px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴트맵 추천</div><div style="font-weight:bold;margin-top:6px">'+s.label+'</div><div style="font-size:24px;font-weight:bold;color:#3b82f6;margin:4px 0">'+s.score+'점 <span style="font-size:12px;color:#6b7280">'+s.grade+'등급</span></div><div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px">'+s.reasons.map(x=>'✅ '+x).join('<br>')+'</div></div>');
-    exploreMarkers.push(m);
-  });
-  const pts=[[r.lat,r.lng],...clinics.map(c=>[c.lat,c.lng]),...spots.map(s=>[s.lat,s.lng])];
-  exploreMap.fitBounds(pts,{padding:[60,60]});
-}
-function highlightClinicCard(idx){
-  document.querySelectorAll('.map-clinic-card').forEach((el,i)=>{el.classList.toggle('active',i===idx)});
-  const el=document.querySelectorAll('.map-clinic-card')[idx];
-  if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-function focusClinicOnMap(lat,lng,idx){
-  if(exploreMap)exploreMap.setView([lat,lng],17,{animate:true});
-  if(exploreMarkers[idx+1])exploreMarkers[idx+1].openPopup();/*+1 because center marker is [0]*/
-  highlightClinicCard(idx);
-}
-
-/* ── Router ── */
-let mapFilter='total',mapSelected=null;
-let analysisState={tab:'overview',generating:false,generated:false};
-const filterLabels={total:'종합 점수',population:'인구밀도',competition:'경쟁강도',cost:'임대비용',access:'접근성',growth:'성장성'};
-function getFilterScore(r,f){return f==='total'?r.scores.total:r.scores[f]}
-
-function navigate(){
-  const hash=location.hash.slice(1)||'home';
-  document.querySelectorAll('.page-section').forEach(el=>el.classList.remove('active'));
-  if(hash.startsWith('analysis-')){
-    document.getElementById('page-analysis').classList.add('active');
-    const code=hash.replace('analysis-','');
-    renderAnalysis(code);
-  } else {
-    const el=document.getElementById('page-'+hash);
-    if(el)el.classList.add('active');
-    else document.getElementById('page-home').classList.add('active');
-    if(hash==='map')setTimeout(()=>{if(!exploreMap){renderExploreMap();initMapFilters();renderRegionList()}else{exploreMap.invalidateSize()}},150);
-  }
-  window.scrollTo(0,0);closeMobile();
-}
-window.addEventListener('hashchange',navigate);
-
-/* ── Quick Analyze ── */
-function quickAnalyze(){
-  const v=(document.getElementById('quick-search').value||'').trim();if(!v)return;
-  const ex=REGIONS.find(r=>r.dong.includes(v)||r.sigungu.includes(v)||r.sido.includes(v));
-  if(ex){location.hash='analysis-'+ex.dong_code;return}
-  location.hash='analysis-gen:'+encodeURIComponent(v);
-}
-function analyzeFromInput(){
-  const v=(document.getElementById('analysis-quick-input').value||'').trim();if(!v)return;
-  const ex=REGIONS.find(r=>r.dong.includes(v)||r.sigungu.includes(v));
-  if(ex){location.hash='analysis-'+ex.dong_code;return}
-  location.hash='analysis-gen:'+encodeURIComponent(v);
-}
-
 /* ── Analysis Text Generator ── */
 function genTexts(r){
   const popText=r.scores.population>=80?`반경 1km 내 거주인구 ${fmt(r.population)}명으로 치과 수요가 충분합니다. 특히 20~39세 인구가 ${r.age_20_39_pct}%로 심미·교정 진료 수요가 높을 것으로 예상됩니다.`:r.scores.population>=50?`거주인구 ${fmt(r.population)}명은 평균 수준입니다. 20~39세 비중이 ${r.age_20_39_pct}%이며, 주간 유동인구 ${fmt(r.daily_floating)}명을 함께 고려하면 실질 수요는 양호합니다.`:`반경 1km 거주인구 ${fmt(r.population)}명으로 수요 기반이 다소 취약합니다.`;
@@ -636,137 +429,103 @@ function genTexts(r){
   return{popText,compText,costText,accessText,growthText};
 }
 
-/* ── Pricing ── */
-let pricingYearly=false;
-function buildPricingHTML(){
-  const plans=[{name:"무료",en:"Free",mp:0,yp:0,badge:null,cta:"무료로 시작",cs:"border border-gray-300 text-gray-700 hover:bg-gray-50",feats:[{t:"전국 지도 탐색",i:true},{t:"시도 단위 히트맵",i:true},{t:"치과 분포 (위치만)",i:true},{t:"입지 분석 월 1회",i:true},{t:"5축 상세 분석",i:false},{t:"투자 시뮬레이션",i:false},{t:"AI 입지분석 리포트",i:false}]},{name:"베이직",en:"Basic",mp:99000,yp:990000,badge:"인기",cta:"베이직 시작",cs:"bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20",feats:[{t:"전국 지도 탐색",i:true},{t:"시군구 단위 히트맵",i:true},{t:"치과 상세정보",i:true},{t:"입지 분석 월 10회",i:true},{t:"투자 시뮬레이션 (기본)",i:true},{t:"AI 리포트 월 3회",i:true},{t:"PDF 다운로드",i:true}]},{name:"프리미엄",en:"Premium",mp:299000,yp:2990000,badge:null,cta:"프리미엄 시작",cs:"border border-gray-300 text-gray-700 hover:bg-gray-50",feats:[{t:"행정동 단위 히트맵",i:true},{t:"입지 분석 무제한",i:true},{t:"투자 시뮬레이션 (대출)",i:true},{t:"AI 리포트 무제한",i:true},{t:"후보지 5개 비교",i:true},{t:"전문가 매칭",i:true},{t:"월 1회 상담",i:true}]}];
-  const iy=pricingYearly;const chk='<svg class="w-5 h-5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';const xI='<svg class="w-5 h-5 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
-  let h='<div class="max-w-6xl mx-auto px-6"><h2 class="text-3xl font-bold text-center">필요한 만큼만, 합리적으로.</h2>';
-  h+='<div class="mt-6 flex items-center justify-center gap-3"><span class="text-sm font-medium '+(iy?'text-gray-400':'text-gray-900')+'">월간</span><button onclick="togglePricing()" class="relative w-14 h-7 rounded-full transition '+(iy?'bg-blue-600':'bg-gray-300')+'"><span class="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform '+(iy?'translate-x-7':'translate-x-0.5')+'"></span></button><span class="text-sm font-medium '+(iy?'text-gray-900':'text-gray-400')+'">연간</span>'+(iy?'<span class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">2개월 무료</span>':'')+'</div>';
-  h+='<div class="mt-12 grid md:grid-cols-3 gap-8">';
-  plans.forEach(p=>{const pr=iy?Math.round(p.yp/12):p.mp;const pop=p.badge==='인기';h+='<div class="relative rounded-2xl p-8 '+(pop?'bg-white ring-2 ring-blue-600 shadow-xl':'bg-white border border-gray-200 shadow-sm')+'">';if(pop)h+='<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">가장 인기</div>';h+='<h3 class="text-lg font-bold">'+p.name+'<span class="text-sm font-normal text-gray-400 ml-2">'+p.en+'</span></h3><div class="mt-4"><span class="text-4xl font-bold">'+(pr===0?'무료':formatPrice(pr)+'원')+'</span>'+(pr>0?'<span class="text-gray-500 text-sm">/월</span>':'')+'</div>';if(iy&&p.yp>0)h+='<p class="text-xs text-gray-400 mt-1">연 '+formatPrice(p.yp)+'원</p>';h+='<a href="#map" class="mt-6 block w-full text-center py-3 rounded-lg font-semibold transition '+p.cs+'">'+p.cta+'</a><ul class="mt-8 space-y-3">';p.feats.forEach(f=>{h+='<li class="flex items-start gap-2 text-sm">'+(f.i?chk:xI)+'<span class="'+(f.i?'text-gray-700':'text-gray-400')+'">'+f.t+'</span></li>'});h+='</ul></div>'});
-  h+='</div><p class="mt-8 text-center text-sm text-gray-400">모든 유료 플랜은 7일 무료 체험 &middot; 언제든 해지 가능</p></div>';return h;
-}
-function togglePricing(){pricingYearly=!pricingYearly;document.getElementById('home-pricing').innerHTML=buildPricingHTML();document.getElementById('pricing-full').innerHTML=buildPricingHTML()}
+/* ── Analysis State ── */
+let analysisState={tab:'overview',generating:false,generated:false};
 
-/* ── Map (네이버 지도 스타일) ── */
-function initMapFilters(){
-  const fs=[{k:'total',l:'종합'},{k:'population',l:'인구'},{k:'competition',l:'경쟁'},{k:'cost',l:'비용'},{k:'access',l:'접근성'},{k:'growth',l:'성장성'}];
-  const el=document.getElementById('map-filters');if(!el)return;
-  el.innerHTML='<button onclick="backToRegionList()" class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">치과</button>'+fs.map(f=>'<button onclick="setMapFilter(\''+f.k+'\')" class="px-2.5 py-1 rounded-full text-xs font-medium transition border '+(mapFilter===f.k?'border-blue-600 text-blue-600 bg-blue-50':'border-gray-200 text-gray-500 hover:bg-gray-50')+'">'+f.l+'</button>').join('');
+/* ── Navigate to another region (stays on analysis.html) ── */
+function analyzeFromInput(){
+  const v=(document.getElementById('analysis-quick-input').value||'').trim();if(!v)return;
+  var url='analysis0.html?q='+encodeURIComponent(v);
+  var pp=new URLSearchParams(window.location.search);
+  if(pp.get('cname'))url+='&cname='+encodeURIComponent(pp.get('cname'));
+  if(pp.get('cphone'))url+='&cphone='+encodeURIComponent(pp.get('cphone'));
+  if(pp.get('cemail'))url+='&cemail='+encodeURIComponent(pp.get('cemail'));
+  if(pp.get('cinfo'))url+='&cinfo='+encodeURIComponent(pp.get('cinfo'));
+  window.location.href=url;
 }
-function setMapFilter(f){mapFilter=f;initMapFilters();if(mapCurrentRegion)selectMapRegion(mapCurrentRegion);else renderRegionList()}
-function onMapSearch(){
-  const v=(document.getElementById('map-search').value||'').trim();
-  if(!v){mapCurrentRegion=null;renderRegionList();showAllRegionsOnMap();return}
-  const matches=REGIONS.filter(r=>r.dong.includes(v)||r.sigungu.includes(v)||r.sido.includes(v));
-  if(matches.length===1){selectMapRegion(matches[0]);return}
-  if(matches.length>1){mapCurrentRegion=null;renderRegionList(matches);showAllRegionsOnMap();return}
-  /* no match → AI analyze prompt */
-  document.getElementById('map-count-info').innerHTML='「'+v+'」 검색 결과 없음';
-  document.getElementById('map-list').innerHTML='<div class="flex flex-col items-center py-16 px-6 text-center"><div class="text-4xl mb-3">🔎</div><p class="font-bold text-gray-800 text-lg">「'+v+'」</p><p class="text-sm text-gray-500 mt-2">기존 데이터에 없는 지역입니다.<br>AI가 분석 데이터를 생성합니다.</p><button onclick="location.hash=\'analysis-gen:'+encodeURIComponent(v)+'\'" class="mt-4 bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-blue-700 transition text-sm">「'+v+'」 AI 분석 시작 →</button></div>';
+function analyzeFromHero(){
+  const v=(document.getElementById('hero-search-input').value||'').trim();if(!v)return;
+  var url='analysis0.html?q='+encodeURIComponent(v);
+  var cn=(document.getElementById('client-name')||{}).value||'';
+  var cp=(document.getElementById('client-phone')||{}).value||'';
+  var ce=(document.getElementById('client-email')||{}).value||'';
+  var ci=(document.getElementById('client-info')||{}).value||'';
+  if(cn)url+='&cname='+encodeURIComponent(cn);
+  if(cp)url+='&cphone='+encodeURIComponent(cp);
+  if(ce)url+='&cemail='+encodeURIComponent(ce);
+  if(ci)url+='&cinfo='+encodeURIComponent(ci);
+  window.location.href=url;
 }
-function renderRegionList(regions){
-  regions=regions||REGIONS.filter(r=>!r._generated);
-  const sorted=[...regions].sort((a,b)=>getFilterScore(b,mapFilter)-getFilterScore(a,mapFilter));
-  document.getElementById('map-count-info').innerHTML='<span>'+sorted.length+'개 지역</span><span class="text-blue-600 font-medium">'+filterLabels[mapFilter]+' 순</span>';
-  let h='';sorted.forEach(r=>{const sc=getFilterScore(r,mapFilter);const color=sc>=80?'#3b82f6':sc>=70?'#22c55e':sc>=60?'#eab308':'#ef4444';
-    h+='<div onclick="selectMapRegion(REGIONS.find(x=>x.dong_code===\''+r.dong_code+'\'))" class="p-4 border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition">'
-    +'<div class="flex items-start justify-between"><div><h3 class="font-bold text-blue-700 text-[15px]">'+r.dong+'</h3><p class="text-xs text-gray-500 mt-0.5">'+r.sido+' '+r.sigungu+'</p></div><div class="px-2 py-0.5 rounded text-xs font-bold" style="background:'+color+'15;color:'+color+'">'+r.grade+'등급</div></div>'
-    +'<div class="flex items-center gap-4 mt-2 text-xs text-gray-500"><span>'+filterLabels[mapFilter]+' <b class="text-gray-900">'+sc+'점</b></span><span>인구 '+(r.population/10000).toFixed(1)+'만</span><span>치과 <b class="text-red-500">'+r.dental_count+'</b>개</span></div>'
-    +'<div class="mt-2 w-full h-1 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:'+sc+'%;background:'+color+'"></div></div></div>'
-  });
-  document.getElementById('map-list').innerHTML=h;
-}
-function selectMapRegion(r){
-  if(!r)return;mapCurrentRegion=r;mapSelected=r;
-  const clinics=generateNearbyClinics(r),spots=generateRecommendedSpots(r);
-  mapClinicData={clinics,spots};
-  renderClinicListPanel(r,clinics,spots);
-  showRegionClinicsOnMap(r,clinics,spots);
-}
-function renderClinicListPanel(r,clinics,spots){
-  const analysisHash=r._generated?'analysis-gen:'+encodeURIComponent(r.dong):'analysis-'+r.dong_code;
-  document.getElementById('map-count-info').innerHTML='<span>'+r.dong+' 치과 '+clinics.length+'개</span><span class="text-amber-600 font-medium">추천 '+spots.length+'곳</span>';
-  let h='';
-  /* region header */
-  h+='<div class="p-4 bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-blue-200">'
-  +'<button onclick="backToRegionList()" class="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1 mb-2"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>전체 지역</button>'
-  +'<div class="flex items-center justify-between"><div><h2 class="font-bold text-lg text-gray-900">'+r.dong+'</h2><p class="text-xs text-gray-500">'+r.sido+' '+r.sigungu+' · 인구 '+fmt(r.population)+'명 · 치과 '+r.dental_count+'개</p></div>'
-  +'<div class="text-right"><p class="text-2xl font-bold '+getScoreColor(r.scores.total)+'">'+r.scores.total+'</p><p class="text-xs text-gray-400">'+r.grade+'등급</p></div></div>'
-  +'<a href="#'+analysisHash+'" class="mt-3 block text-center bg-blue-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-blue-700 transition">상세 분석 보기 →</a></div>';
-  /* recommended spots */
-  spots.forEach(s=>{
-    h+='<div class="p-4 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50/50">'
-    +'<div class="flex items-center gap-1.5 mb-1"><span class="text-sm">⭐</span><span class="text-[11px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">덴트맵 추천 개원 위치</span></div>'
-    +'<h3 class="font-bold text-amber-900 text-sm">'+s.label+'</h3>'
-    +'<div class="flex items-baseline gap-2 mt-0.5"><span class="text-xl font-bold text-blue-600">'+s.score+'점</span><span class="text-[11px] text-gray-400">'+s.grade+'등급</span></div>'
-    +'<p class="text-xs text-gray-600 mt-1">'+s.reasons.slice(0,2).join(' · ')+'</p>'
-    +'<p class="text-[11px] text-gray-400 mt-0.5">예상 임대료 '+s.rent+'만/평 · 주변인구 '+fmt(s.estPop)+'명</p></div>';
-  });
-  /* clinics */
-  clinics.forEach((c,i)=>{
-    const stBg=c.status==='영업중'?'bg-green-50 text-green-700':c.status==='휴업'?'bg-yellow-50 text-yellow-700':'bg-red-50 text-red-700';
-    const threatColor=c.competitionThreat==='높음'?'text-red-600':c.competitionThreat==='보통'?'text-amber-600':'text-green-600';
-    h+='<div class="map-clinic-card p-4 border-b border-gray-100 cursor-pointer" onclick="focusClinicOnMap('+c.lat+','+c.lng+','+i+')">'
-    +'<div class="flex gap-3"><div class="flex-1 min-w-0">'
-    +'<div class="flex items-center gap-1.5 flex-wrap"><h3 class="font-bold text-blue-700 text-[14px]">'+c.name+'</h3>'
-    +'<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded '+stBg+'">'+c.status+'</span>'
-    +(c.forSale?'<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">인수가능</span>':'')+'</div>'
-    +'<div class="flex flex-wrap gap-1 mt-1"><span class="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded">'+c.type+'</span>'
-    +'<span class="text-[10px] bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded">'+c.priceLevel+'</span>'
-    +'<span class="text-[10px] bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded">'+nightWeekendLabel(c.nightWeekend)+'</span></div>'
-    +'<p class="text-xs text-gray-500 mt-1">'+c.director+' · '+c.estYear+'년 개원 ('+c.yearsOpen+'년차)</p>'
-    +'<p class="text-xs text-gray-400">'+c.floor+' · '+c.size+(c.hasParking?' · 🅿️':'')+'</p>'
-    +'<div class="flex items-center gap-2 mt-1"><span class="text-xs text-yellow-600">★ '+c.naverRating+' ('+fmt(c.naverReviewCount)+')</span><span class="text-xs text-gray-400">체어 '+c.chairs+'대</span></div>'
-    +'<div class="flex items-center gap-2 mt-0.5"><span class="text-xs text-gray-500">의사 '+c.dentistCount+' · 위생사 '+c.hygienistCount+' · 총 '+c.totalStaff+'명</span></div>'
-    +'<div class="flex items-center gap-2 mt-0.5"><span class="text-xs text-gray-500">일 '+c.dailyPatients+'명 · 보험 '+fmt(c.insuranceClaims)+'건/월 · 비급여 '+c.nonCoverageRatio+'%</span></div>'
-    +'<div class="flex flex-wrap gap-1 mt-1">'+c.specialties.map(function(sp){return '<span class="text-[10px] bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded">'+sp+'</span>'}).join('')+'</div>'
-    +'<div class="flex items-center gap-2 mt-1.5">'
-    +'<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">연 '+fmtRevKr(c.annualRevenue)+'원</span>'
-    +'<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">월 '+fmtRevKr(c.monthlyRevenue)+'원</span></div>'
-    +'<div class="flex items-center gap-2 mt-0.5"><span class="text-[10px] '+threatColor+' font-medium">경쟁위협 '+c.competitionThreat+'</span><span class="text-[10px] text-gray-400">동종 '+c.sameTypeNearby+'개 · 블로그 '+fmt(c.blogExposure)+'건</span></div>'
-    +(c.forSale&&c.estimatedAcquisitionPrice?'<div class="mt-1"><span class="text-[11px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">예상 인수가 약 '+fmtRevKr(c.estimatedAcquisitionPrice)+'원</span></div>':'')
-    +'</div><div class="w-[52px] h-[52px] rounded-lg flex items-center justify-center text-2xl shrink-0 '+(c.status==='영업중'?'bg-red-50':'bg-gray-100')+'">🦷</div></div>'
-    +'<div class="flex gap-1.5 mt-2.5">'
-    +'<button onclick="event.stopPropagation();focusClinicOnMap('+c.lat+','+c.lng+','+i+')" class="text-[11px] border border-gray-200 text-gray-600 rounded-full px-2.5 py-1 hover:bg-gray-50">📍 위치</button>'
-    +'<button class="text-[11px] border border-blue-200 text-blue-600 rounded-full px-2.5 py-1 hover:bg-blue-50">🗺️ 도착</button>'
-    +'<button class="text-[11px] border border-gray-200 text-gray-600 rounded-full px-2.5 py-1 hover:bg-gray-50">📞 문의</button>'
-    +'</div></div>';
-  });
-  document.getElementById('map-list').innerHTML=h;
-}
-function backToRegionList(){mapCurrentRegion=null;mapSelected=null;document.getElementById('map-search').value='';renderRegionList();showAllRegionsOnMap()}
 
-/* ── Analysis ── */
-function renderAnalysis(code){
-  let r;
-  if(code.startsWith('gen:')){
-    const name=decodeURIComponent(code.slice(4));
-    r=addGeneratedRegion(name);
-  } else {
-    r=REGIONS.find(x=>x.dong_code===code);
-  }
-  if(!r){document.getElementById('analysis-content').innerHTML='<div class="min-h-[60vh] flex items-center justify-center"><div class="text-center"><p class="text-4xl mb-4">🔍</p><p class="text-gray-500">해당 지역을 찾을 수 없습니다</p><a href="#map" class="text-blue-600 mt-3 inline-block hover:underline">&larr; 지도로 돌아가기</a></div></div>';return}
-  analysisState={tab:'overview',generating:false,generated:false};
-  renderAnalysisContent(r);
+/* ── Tab Switch ── */
+function switchTab(tab,code){
+  analysisState.tab=tab;
+  const r=REGIONS.find(x=>x.dong_code===code);
+  if(r)renderAnalysisContent(r);
 }
-function switchTab(tab,code){analysisState.tab=tab;const r=REGIONS.find(x=>x.dong_code===code);if(r)renderAnalysisContent(r)}
+
+/* ── Generate Report (from hero button) ── */
+function generateReportFromHero(code){
+  analysisState.tab='report';
+  analysisState.generating=false;
+  analysisState.generated=true;
+  const r=REGIONS.find(x=>x.dong_code===code);
+  if(r)renderAnalysisContent(r);
+}
+
+/* ── Render Full Analysis Content ── */
 function renderAnalysisContent(r){
   if(analysisMap){analysisMap.remove();analysisMap=null}
   const tx=genTexts(r),tab=analysisState.tab;
   let tc='';if(tab==='overview')tc=buildOverviewTab(r,tx);else if(tab==='investment')tc=buildInvestmentTab(r);else tc=buildReportTab(r,tx);
   const loc=r.sido?r.sido+' '+r.sigungu+' ':'';
-  const fullLoc=(function(){var p=[];if(r.sido)p.push(r.sido);if(r.sigungu&&r.sigungu!==r.dong)p.push(r.sigungu);p.push(r.dong);return p.join(' ')})();
-  document.getElementById('analysis-content').innerHTML='<div class="max-w-6xl mx-auto px-6 py-8"><div class="flex items-center justify-between mb-6"><div class="flex items-center gap-2 text-sm text-gray-400"><a href="#map" class="hover:text-blue-600">지도 탐색</a><span>/</span><span class="text-gray-700">'+fullLoc+'</span></div><div class="flex items-center gap-2"><input id="analysis-quick-input" type="text" placeholder="다른 지역 입력" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 outline-none w-40" onkeydown="if(event.key===\'Enter\')analyzeFromInput()"><button onclick="analyzeFromInput()" class="bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700">분석</button></div></div><div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8"><div><p class="text-sm text-gray-400">'+(r.sido&&r.sigungu&&r.sigungu!==r.dong?r.sido+' '+r.sigungu:r.sido||'')+'</p><h1 class="text-3xl font-bold">'+r.dong+' 입지 분석</h1></div><div class="px-4 py-2 rounded-xl text-lg font-bold '+getGradeColor(r.grade)+'">종합 '+r.scores.total+'점 &middot; '+r.grade+'등급</div></div><div class="mb-8"><div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div id="analysis-map" style="height:450px;z-index:0"></div><div class="px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50 text-right">지도 우측 하단의 <b>범례</b>에서 마커·배지 설명을 확인하세요</div></div><div id="clinic-list-container" class="mt-4"></div></div><div class="border-b border-gray-200 mb-8"><div class="flex gap-1"><button onclick="switchTab(\'overview\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='overview'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">종합 분석</button><button onclick="switchTab(\'investment\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='investment'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">투자 시뮬레이터</button><button onclick="switchTab(\'report\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='report'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">AI 입지분석 리포트</button></div></div>'+tc+'</div>';
+  const fullLoc=(function(){var parts=[];if(r.sido)parts.push(r.sido);if(r.sigungu&&r.sigungu!==r.dong)parts.push(r.sigungu);parts.push(r.dong);return parts.join(' ')})();
+  /* Hero section */
+  let hero='<div class="bg-gradient-to-br from-blue-50 via-white to-blue-50 border-b border-gray-100">';
+  hero+='<div class="max-w-6xl mx-auto px-6 py-10">';
+  hero+='<div class="flex items-center gap-2 text-sm text-gray-400 mb-4"><a href="index.html" class="hover:text-blue-600">홈</a><span>/</span><a href="map.html" class="hover:text-blue-600">지도 탐색</a><span>/</span><span class="text-gray-700">'+fullLoc+'</span></div>';
+  hero+='<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">';
+  hero+='<div>';
+  hero+='<p class="text-sm text-gray-400">'+(r.sido&&r.sigungu&&r.sigungu!==r.dong?r.sido+' '+r.sigungu:r.sido||'')+'</p>';
+  hero+='<h1 class="text-3xl md:text-4xl font-bold mt-1">'+r.dong+' 입지 분석</h1>';
+  hero+='<div class="flex items-center gap-3 mt-3">';
+  hero+='<div class="px-4 py-2 rounded-xl text-lg font-bold '+getGradeColor(r.grade)+'">종합 '+r.scores.total+'점 &middot; '+r.grade+'등급</div>';
+  var rptUrl="report0.html?q="+encodeURIComponent(r.dong);
+  var pp=new URLSearchParams(window.location.search);
+  if(pp.get("cname"))rptUrl+="&cname="+encodeURIComponent(pp.get("cname"));
+  if(pp.get("cphone"))rptUrl+="&cphone="+encodeURIComponent(pp.get("cphone"));
+  if(pp.get("cemail"))rptUrl+="&cemail="+encodeURIComponent(pp.get("cemail"));
+  if(pp.get("cinfo"))rptUrl+="&cinfo="+encodeURIComponent(pp.get("cinfo"));
+  hero+='<a href="'+rptUrl+'" target="_blank" class="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 flex items-center gap-2 no-underline"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>분석 리포트 만들기</a>';
+  hero+='</div>';
+  hero+='</div>';
+  hero+='<div class="flex flex-col items-end gap-2">';
+  hero+='<div class="flex items-center gap-2"><input id="analysis-quick-input" type="text" placeholder="다른 지역 입력 (예: 홍대, 판교)" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-600 outline-none w-56" onkeydown="if(event.key===\'Enter\')analyzeFromInput()"><button onclick="analyzeFromInput()" class="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition">분석</button></div>';
+  hero+='</div>';
+  hero+='</div>';
+  hero+='</div></div>';
+
+  /* Main content area */
+  let main='<div class="max-w-6xl mx-auto px-6 py-8">';
+  /* Map */
+  main+='<div class="mb-8"><div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div id="analysis-map" style="height:450px;z-index:0"></div><div class="px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50 text-right">지도 우측 하단의 <b>범례</b>에서 마커·배지 설명을 확인하세요</div></div><div id="clinic-list-container" class="mt-4"></div></div>';
+  /* Tabs */
+  main+='<div class="border-b border-gray-200 mb-8"><div class="flex gap-1"><button onclick="switchTab(\'overview\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='overview'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">종합 분석</button><button onclick="switchTab(\'investment\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='investment'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">투자 시뮬레이터</button><button onclick="switchTab(\'report\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='report'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">AI 입지분석 리포트</button></div></div>';
+  main+=tc;
+  main+='</div>';
+
+  document.getElementById('analysis-root').innerHTML=hero+main;
   setTimeout(()=>renderAnalysisMap(r),100);
 }
+
+/* ── Overview Tab ── */
 function buildOverviewTab(r,tx){
   const axes=[{i:'👥',l:'인구/수요',s:r.scores.population,t:tx.popText},{i:'🏥',l:'경쟁 환경',s:r.scores.competition,t:tx.compText},{i:'💰',l:'비용 효율',s:r.scores.cost,t:tx.costText},{i:'🚇',l:'접근성',s:r.scores.access,t:tx.accessText},{i:'📈',l:'성장성',s:r.scores.growth,t:tx.growthText}];
   let h='<div class="space-y-8"><div class="grid grid-cols-2 md:grid-cols-5 gap-4">';axes.forEach(a=>{h+='<div class="bg-white rounded-xl border border-gray-100 p-4 text-center shadow-sm"><p class="text-2xl">'+a.i+'</p><p class="text-xs text-gray-500 mt-1">'+a.l+'</p><p class="text-2xl font-bold mt-1 '+getScoreColor(a.s)+'">'+a.s+'</p><div class="mt-2 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full '+getScoreBarColor(a.s)+'" style="width:'+a.s+'%"></div></div></div>'});h+='</div>';
   h+='<div class="grid md:grid-cols-4 gap-4">';[{l:"거주인구",v:fmt(r.population)+"명",s:"20~39세 "+r.age_20_39_pct+"%"},{l:"치과 수",v:r.dental_count+"개",s:"1:"+fmt(r.pop_per_clinic)},{l:"임대료",v:r.avg_rent_pyeong+"만/평",s:"월 "+fmt(r.avg_rent_pyeong*r.area_pyeong)+"만"},{l:"유동인구",v:fmt(r.daily_floating)+"명",s:r.subway_station+" "+r.subway_walk_min+"분"}].forEach(i=>{h+='<div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500">'+i.l+'</p><p class="text-xl font-bold mt-1">'+i.v+'</p><p class="text-xs text-gray-400 mt-1">'+i.s+'</p></div>'});h+='</div>';
   h+='<div class="space-y-4"><h2 class="text-lg font-bold">5축 상세 분석</h2>';axes.forEach(a=>{h+='<div class="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-xl">'+a.i+'</span><h3 class="font-bold">'+a.l+'</h3></div><span class="text-lg font-bold '+getScoreColor(a.s)+'">'+a.s+'점</span></div><div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full '+getScoreBarColor(a.s)+'" style="width:'+a.s+'%"></div></div><p class="text-sm text-gray-600 leading-relaxed">'+a.t+'</p></div>'});h+='</div></div>';return h;
 }
+
 /* ── Investment Tab ── */
 let invState={};
 function getInv(r){if(!invState[r.dong_code])invState[r.dong_code]={py:r.area_pyeong,dep:r.avg_rent_pyeong*r.area_pyeong*10,intr:r.area_pyeong*200,eq:12000,op:3000};return invState[r.dong_code]}
@@ -780,6 +539,7 @@ function buildInvestmentTab(r){
 }
 function updPy(code,v){const r=REGIONS.find(x=>x.dong_code===code);if(!r)return;getInv(r).py=Number(v);renderAnalysisContent(r)}
 function updFld(code,f,v){const r=REGIONS.find(x=>x.dong_code===code);if(!r)return;getInv(r)[f]=Number(v);renderAnalysisContent(r)}
+
 /* ── Report Tab ── */
 function buildReportTab(r,tx){
   if(!analysisState.generated)return '<div class="text-center py-20"><p class="text-5xl mb-4">📋</p><h2 class="text-xl font-bold">AI 입지분석 리포트</h2><p class="text-gray-500 mt-2">5축 분석과 투자 시뮬레이션을 종합하여<br>AI가 맞춤형 결정 리포트를 생성합니다.</p><button onclick="genReport(\''+r.dong_code+'\')" '+(analysisState.generating?'disabled':'')+' class="mt-6 bg-blue-600 text-white font-semibold px-8 py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50">'+(analysisState.generating?'<span class="flex items-center gap-2"><svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>AI 분석 중...</span>':'AI 입지분석 리포트 생성')+'</button></div>';
@@ -792,28 +552,39 @@ function buildReportTab(r,tx){
   const da=[{l:'인구/수요',s:r.scores.population,t:tx.popText},{l:'경쟁 환경',s:r.scores.competition,t:tx.compText},{l:'비용 효율',s:r.scores.cost,t:tx.costText},{l:'접근성',s:r.scores.access,t:tx.accessText},{l:'성장성',s:r.scores.growth,t:tx.growthText}];
   let rk='';if(r.scores.competition<60)rk+='<div class="bg-red-50 rounded-lg p-3 text-sm text-red-800">치과 '+r.dental_count+'개로 경쟁 치열</div>';if(r.scores.cost<60)rk+='<div class="bg-red-50 rounded-lg p-3 text-sm text-red-800">평당 '+r.avg_rent_pyeong+'만원 높은 임대료</div>';if(r.pop_growth_rate<1)rk+='<div class="bg-red-50 rounded-lg p-3 text-sm text-red-800">인구 증가율 '+r.pop_growth_rate+'%</div>';if(!rk)rk='<div class="bg-yellow-50 rounded-lg p-3 text-sm text-yellow-800">전반적으로 리스크 낮음</div>';
   let op='';if(r.scores.population>=70)op+='<div class="bg-green-50 rounded-lg p-3 text-sm text-green-800">인구 '+fmt(r.population)+'명 수요 탄탄</div>';if(r.pop_growth_rate>=3)op+='<div class="bg-green-50 rounded-lg p-3 text-sm text-green-800">인구 +'+r.pop_growth_rate+'% 성장</div>';if(r.age_20_39_pct>=35)op+='<div class="bg-green-50 rounded-lg p-3 text-sm text-green-800">20~39세 '+r.age_20_39_pct+'% 고단가 수요</div>';
-  return '<div class="max-w-3xl mx-auto space-y-8"><div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white"><div class="flex items-center justify-between mb-4"><p class="text-blue-200 text-sm">AI 입지분석 리포트</p><p class="text-blue-200 text-xs">'+new Date().toLocaleDateString('ko-KR')+'</p></div><h2 class="text-2xl font-bold">'+fullLoc+'</h2><p class="mt-1 text-blue-100">종합 '+ts+'점 ('+r.grade+'등급) — '+sl+'</p></div><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-3"><span class="text-blue-600">01</span> 한 줄 판정</h3><div class="bg-blue-50 rounded-lg p-4"><p class="font-medium leading-relaxed">'+es+'</p></div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">02</span> 종합 점수</h3><div class="flex items-center gap-6"><div class="text-center"><p class="text-5xl font-bold '+getScoreColor(ts)+'">'+ts+'</p><p class="text-sm text-gray-500 mt-1">'+r.grade+'등급</p></div><div class="flex-1 space-y-2">'+sa.map(a=>'<div class="flex items-center gap-2"><span class="text-xs text-gray-500 w-16">'+a.l+'</span><div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full '+getScoreBarColor(a.s)+'" style="width:'+a.s+'%"></div></div><span class="text-xs font-bold w-8 text-right '+getScoreColor(a.s)+'">'+a.s+'</span></div>').join('')+'</div></div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">03</span> 5축 상세</h3><div class="space-y-4">'+da.map(a=>'<div class="border-l-4 border-blue-100 pl-4 py-2"><div class="flex items-center gap-2 mb-1"><span class="font-semibold text-sm">'+a.l+'</span><span class="text-xs font-bold px-2 py-0.5 rounded '+getGradeColor(a.s>=80?'A':a.s>=60?'B':'C')+'">'+a.s+'점</span></div><p class="text-sm text-gray-600">'+a.t+'</p></div>').join('')+'</div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">04</span> 투자 요약</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">총 투자금</p><p class="text-lg font-bold">'+(ti/10000).toFixed(1)+'억</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">월매출</p><p class="text-lg font-bold text-green-600">'+fmt(mRev)+'만</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">월 순이익</p><p class="text-lg font-bold text-blue-600">'+fmt(mP)+'만</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">손익분기</p><p class="text-lg font-bold">'+be+'개월</p></div></div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">05</span> 리스크 & 기회</h3><div class="grid md:grid-cols-2 gap-4"><div><p class="font-semibold text-red-600 text-sm mb-2">리스크</p><div class="space-y-2">'+rk+'</div></div><div><p class="font-semibold text-green-600 text-sm mb-2">기회</p><div class="space-y-2">'+op+'</div></div></div></section><div class="bg-gray-50 rounded-xl p-4 text-xs text-gray-400">본 리포트는 참고 자료이며, 법적 책임을 지지 않습니다. | &copy; DentMap</div><div class="flex gap-3 justify-center pb-8"><button class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700">PDF 다운로드</button><a href="#map" class="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 text-center">다른 지역 분석</a></div></div>';
+  return '<div class="max-w-3xl mx-auto space-y-8"><div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white"><div class="flex items-center justify-between mb-4"><p class="text-blue-200 text-sm">AI 입지분석 리포트</p><p class="text-blue-200 text-xs">'+new Date().toLocaleDateString('ko-KR')+'</p></div><h2 class="text-2xl font-bold">'+(function(){var p=[];if(r.sido)p.push(r.sido);if(r.sigungu&&r.sigungu!==r.dong)p.push(r.sigungu);p.push(r.dong);return p.join(' ')})()+'</h2><p class="mt-1 text-blue-100">종합 '+ts+'점 ('+r.grade+'등급) — '+sl+'</p></div><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-3"><span class="text-blue-600">01</span> 한 줄 판정</h3><div class="bg-blue-50 rounded-lg p-4"><p class="font-medium leading-relaxed">'+es+'</p></div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">02</span> 종합 점수</h3><div class="flex items-center gap-6"><div class="text-center"><p class="text-5xl font-bold '+getScoreColor(ts)+'">'+ts+'</p><p class="text-sm text-gray-500 mt-1">'+r.grade+'등급</p></div><div class="flex-1 space-y-2">'+sa.map(a=>'<div class="flex items-center gap-2"><span class="text-xs text-gray-500 w-16">'+a.l+'</span><div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full '+getScoreBarColor(a.s)+'" style="width:'+a.s+'%"></div></div><span class="text-xs font-bold w-8 text-right '+getScoreColor(a.s)+'">'+a.s+'</span></div>').join('')+'</div></div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">03</span> 5축 상세</h3><div class="space-y-4">'+da.map(a=>'<div class="border-l-4 border-blue-100 pl-4 py-2"><div class="flex items-center gap-2 mb-1"><span class="font-semibold text-sm">'+a.l+'</span><span class="text-xs font-bold px-2 py-0.5 rounded '+getGradeColor(a.s>=80?'A':a.s>=60?'B':'C')+'">'+a.s+'점</span></div><p class="text-sm text-gray-600">'+a.t+'</p></div>').join('')+'</div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">04</span> 투자 요약</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">총 투자금</p><p class="text-lg font-bold">'+(ti/10000).toFixed(1)+'억</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">월매출</p><p class="text-lg font-bold text-green-600">'+fmt(mRev)+'만</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">월 순이익</p><p class="text-lg font-bold text-blue-600">'+fmt(mP)+'만</p></div><div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">손익분기</p><p class="text-lg font-bold">'+be+'개월</p></div></div></section><section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"><h3 class="font-bold flex items-center gap-2 mb-4"><span class="text-blue-600">05</span> 리스크 & 기회</h3><div class="grid md:grid-cols-2 gap-4"><div><p class="font-semibold text-red-600 text-sm mb-2">리스크</p><div class="space-y-2">'+rk+'</div></div><div><p class="font-semibold text-green-600 text-sm mb-2">기회</p><div class="space-y-2">'+op+'</div></div></div></section><div class="bg-gray-50 rounded-xl p-4 text-xs text-gray-400">본 리포트는 참고 자료이며, 법적 책임을 지지 않습니다. | &copy; DentMap</div><div class="flex gap-3 justify-center pb-8"><button class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700">PDF 다운로드</button><a href="map.html" class="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 text-center">다른 지역 분석</a></div></div>';
 }
 function genReport(code){analysisState.generating=true;const r=REGIONS.find(x=>x.dong_code===code);if(r)renderAnalysisContent(r);setTimeout(()=>{analysisState.generating=false;analysisState.generated=true;if(r)renderAnalysisContent(r)},2000)}
 
-/* ── Init ── */
-function init(){
-  document.getElementById('problems-grid').innerHTML=["부동산 중개사의 주관적 추천에 의존","지인 소개로 '감'에 의한 결정","인구·경쟁·임대료 데이터를 직접 모으는 수개월",'개원 후에야 "여기가 아니었는데..." 후회'].map(t=>'<div class="bg-red-50 rounded-xl p-6 border border-red-100 text-left"><span class="text-red-400 text-xl font-bold">&times;</span><p class="mt-2 font-semibold text-gray-800">'+t+'</p></div>').join('');
-  document.getElementById('features-grid').innerHTML=[{i:"📍",b:"bg-blue-100",t:"입지 히트맵",s:"어디에 열어야 할까?",d:"전국 치과 분포, 인구밀도, 유동인구를 히트맵으로 한눈에."},{i:"📊",b:"bg-green-100",t:"AI 입지 점수",s:"이 자리, 몇 점?",d:"5개 축 100점 만점의 객관적 점수."},{i:"💰",b:"bg-yellow-100",t:"투자 시뮬레이터",s:"얼마가 필요할까?",d:"보증금, 인테리어, 장비, 인건비까지 맞춤 계산."},{i:"⚖️",b:"bg-purple-100",t:"개업 vs 인수",s:"새로 열까, 인수할까?",d:"신규 개원과 인수 매물 동시 비교."},{i:"📋",b:"bg-pink-100",t:"AI 입지분석 리포트",s:"결정을 도와주는 리포트",d:"점수와 분석을 종합한 AI 리포트."},{i:"🔜",b:"bg-blue-200",t:"더 많은 기능",s:"계속 업데이트",d:"전문가 매칭, 금융 연계 등 계속 추가.",c:true}].map(f=>'<div class="rounded-2xl p-8 transition '+(f.c?'bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-dashed border-blue-200':'bg-white shadow-sm hover:shadow-md')+'"><div class="w-12 h-12 '+f.b+' rounded-xl flex items-center justify-center text-2xl">'+f.i+'</div><p class="mt-3 text-sm text-blue-600 font-medium">'+f.s+'</p><h3 class="mt-1 text-xl font-bold '+(f.c?'text-blue-700':'')+'">'+f.t+'</h3><p class="mt-2 '+(f.c?'text-blue-600':'text-gray-600')+' leading-relaxed">'+f.d+'</p></div>').join('');
-  document.getElementById('testimonials-grid').innerHTML=[{q:"부동산 5군데보다 덴트맵 30분이 더 유용했습니다.",n:"김○○ 원장",l:"서울 성동구"},{q:"인수할 뻔한 치과가 42점. 큰 실수를 피했어요.",n:"이○○ 원장",l:"경기 용인"},{q:"투자금 시뮬레이션으로 대출 상담이 수월했습니다.",n:"박○○ 원장",l:"대전 유성구"}].map(t=>'<div class="bg-white rounded-2xl p-8 shadow-sm"><div class="text-yellow-400 text-lg">★★★★★</div><p class="mt-4 text-gray-700 leading-relaxed">&ldquo;'+t.q+'&rdquo;</p><div class="mt-6 flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">'+t.n[0]+'</div><div><p class="font-semibold text-sm">'+t.n+'</p><p class="text-xs text-gray-400">'+t.l+'</p></div></div></div>').join('');
-  document.getElementById('home-pricing').innerHTML=buildPricingHTML();
-  const faqs=[{q:"무료로 어디까지?",a:"전국 지도 탐색과 월 1회 입지 분석(종합 점수)이 무료입니다."},{q:"데이터 정확도?",a:"국민건강보험공단, 통계청 등 공공 기관의 공식 데이터 기반입니다."},{q:"치과 외 다른 의료기관?",a:"현재 치과 특화. 향후 의과, 한의과 등 확장 예정."},{q:"구독 해지?",a:"위약금 없이 언제든 해지 가능합니다."},{q:"AI 리포트 법적 효력?",a:"참고 자료이며, 법적 효력이나 보증을 제공하지 않습니다."}];
-  document.getElementById('home-faq').innerHTML=faqs.map(f=>'<details class="bg-white rounded-xl shadow-sm group"><summary class="p-6 font-semibold cursor-pointer flex items-center justify-between">'+f.q+'<svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary><div class="px-6 pb-6 text-gray-600">'+f.a+'</div></details>').join('');
-  document.getElementById('pricing-full').innerHTML=buildPricingHTML();
-  const rows=[["지도 탐색","시도","시군구","행정동"],["입지 분석","월 1회","월 10회","무제한"],["AI 점수","종합만","5축 상세","커스텀"],["투자 시뮬레이션","—","기본","고급"],["AI 리포트","—","월 3회","무제한"],["후보지 비교","—","2개","5개"],["전문가 연결","—","—","O"]];
-  let tbl='<table class="w-full bg-white rounded-xl shadow-sm overflow-hidden"><thead><tr class="border-b border-gray-100"><th class="text-left p-4 text-sm font-semibold text-gray-500">기능</th><th class="p-4 text-sm font-semibold text-gray-500 text-center">무료</th><th class="p-4 text-sm font-semibold text-blue-600 text-center bg-blue-50/50">베이직</th><th class="p-4 text-sm font-semibold text-gray-500 text-center">프리미엄</th></tr></thead><tbody class="divide-y divide-gray-50">';rows.forEach(r=>{tbl+='<tr class="hover:bg-gray-50/50"><td class="p-4 text-sm font-medium text-gray-700">'+r[0]+'</td><td class="p-4 text-sm text-gray-500 text-center">'+r[1]+'</td><td class="p-4 text-sm text-gray-700 text-center bg-blue-50/30 font-medium">'+r[2]+'</td><td class="p-4 text-sm text-gray-500 text-center">'+r[3]+'</td></tr>'});tbl+='</tbody></table>';
-  document.getElementById('pricing-table').innerHTML=tbl;
-  const cats=[{cat:"서비스 일반",items:[{q:"덴트맵은 어떤 서비스?",a:"치과 개원 준비를 위한 데이터 기반 입지 분석, 투자 시뮬레이션, AI 입지분석 리포트를 제공하는 서비스입니다."},{q:"분석 데이터 출처?",a:"국민건강보험공단, 통계청, 소상공인진흥공단, 국토교통부 등 공공기관 공식 데이터 기반."},{q:"치과 외 다른 의료기관?",a:"현재 치과 특화. 향후 의과, 한의과, 약국 등 확장 예정."}]},{cat:"요금 및 결제",items:[{q:"무료 범위?",a:"전국 지도 탐색, 치과 분포 확인, 월 1회 입지 분석(종합 점수)."},{q:"해지 가능?",a:"위약금 없이 언제든 해지 가능. 7일 이내 전액 환불."},{q:"연간 결제 혜택?",a:"연간 결제 시 2개월분 무료 (약 17% 할인)."}]},{cat:"분석 및 리포트",items:[{q:"AI 점수 산출 방법?",a:"인구/수요(25%), 경쟁(25%), 비용(20%), 접근성(15%), 성장성(15%)의 5축."},{q:"AI 리포트 법적 효력?",a:"참고 자료이며 법적 효력 없음."},{q:"리포트 활용?",a:"PDF 다운로드하여 대출 상담 시 사업 계획 자료로 활용 가능."}]}];
-  let fh='';cats.forEach(c=>{fh+='<div class="mb-10"><h2 class="text-lg font-bold mb-4">'+c.cat+'</h2><div class="space-y-3">';c.items.forEach(f=>{fh+='<details class="bg-white rounded-xl shadow-sm border border-gray-100 group"><summary class="p-5 font-semibold cursor-pointer flex items-center justify-between text-sm md:text-base">'+f.q+'<svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary><div class="px-5 pb-5 text-gray-600 text-sm">'+f.a+'</div></details>'});fh+='</div></div>'});
-  document.getElementById('faq-full-content').innerHTML=fh;
-  initMapFilters();renderRegionList();navigate();
+/* ── Show Search Form (when no ?q= parameter) ── */
+function showSearchForm(){
+  document.getElementById('analysis-root').innerHTML='<div class="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-white via-blue-50/30 to-white"><div class="max-w-xl mx-auto px-6 text-center"><div class="text-6xl mb-6">🗺️</div><h1 class="text-3xl md:text-4xl font-bold">치과 개원 입지 분석</h1><p class="mt-4 text-lg text-gray-500 leading-relaxed">분석할 지역명을 입력하면<br>AI가 인구, 경쟁, 비용, 접근성, 성장성을 종합 분석합니다.</p><div class="mt-8 flex flex-col sm:flex-row gap-2 max-w-lg mx-auto"><div class="relative flex-1"><svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="hero-search-input" type="text" placeholder="지역명 입력 (예: 잠실역, 홍대, 수원, 판교)" class="w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition" onkeydown="if(event.key===\'Enter\')analyzeFromHero()"></div><button onclick="analyzeFromHero()" class="bg-blue-600 text-white text-lg font-semibold px-8 py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 whitespace-nowrap">분석하기</button></div><div class="mt-8 max-w-lg mx-auto bg-white border border-gray-200 rounded-2xl p-6 text-left"><h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>의뢰자 정보</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">의뢰자명</label><input id="client-name" type="text" placeholder="홍길동" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">휴대폰 번호</label><input id="client-phone" type="tel" placeholder="010-0000-0000" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">이메일 주소</label><input id="client-email" type="email" placeholder="example@email.com" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">의뢰자 정보</label><input id="client-info" type="text" placeholder="치과 전문의, 개원 3년차 등" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition"></div></div><p class="mt-3 text-xs text-gray-400">* 의뢰자 정보는 리포트에 포함됩니다 (선택 입력)</p></div><p class="mt-4 text-sm text-gray-400">아무 지역이나 입력하세요 — 바로 AI 분석 결과를 확인할 수 있습니다</p><div class="mt-8 flex flex-wrap justify-center gap-2"><span class="text-xs text-gray-400">빠른 분석:</span><a href="analysis.html?q=잠실역" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">잠실역</a><a href="analysis.html?q=강남" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">강남</a><a href="analysis.html?q=판교" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">판교</a><a href="analysis.html?q=홍대" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">홍대</a><a href="analysis.html?q=수원" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">수원</a><a href="analysis.html?q=해운대" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">해운대</a><a href="analysis.html?q=대전" class="text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition">대전</a></div></div></div>';
+  setTimeout(()=>{const inp=document.getElementById('hero-search-input');if(inp)inp.focus()},200);
 }
-document.addEventListener('DOMContentLoaded',init);
+
+/* ── Init on DOMContentLoaded ── */
+document.addEventListener('DOMContentLoaded',function(){
+  const params=new URLSearchParams(window.location.search);
+  const q=params.get('q');
+  if(!q||!q.trim()){
+    window.location.href='analysis.html';
+    return;
+  }
+  const name=q.trim();
+  /* Try to find in existing REGIONS by dong, sigungu, or sido */
+  let r=REGIONS.find(x=>x.dong===name||x.dong.includes(name));
+  if(!r){
+    r=REGIONS.find(x=>x.sigungu.includes(name)||x.sido.includes(name));
+  }
+  if(!r){
+    /* Generate a new region */
+    r=addGeneratedRegion(name);
+  }
+  /* Update page title */
+  document.title=r.dong+' 입지 분석 — 덴트맵AI 치과개원 입지분석';
+  analysisState={tab:'overview',generating:false,generated:false};
+  renderAnalysisContent(r);
+});
 </script>
 </body>
 </html>

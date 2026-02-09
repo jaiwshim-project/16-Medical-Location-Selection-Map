@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자주 묻는 질문 — 덴트맵AI 치과개원 입지분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
+details summary::-webkit-details-marker{display:none}
+details summary{list-style:none}
+</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-sky-100/90 backdrop-blur border-b border-sky-200">
+<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴트맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
+<nav class="hidden md:flex items-center gap-8">
+<a href="analysis.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">입지분석</a>
+<a href="map.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">지도 탐색</a>
+<a href="pricing.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">요금제</a>
+<a href="reports.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">리포트</a>
+<a href="promo.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">홍보</a>
+<span class="text-sm text-blue-600 font-semibold border-b-2 border-blue-600 pb-0.5">FAQ</span>
+<a href="manual.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">사용자 매뉴얼</a>
+</nav>
+<div class="hidden md:flex items-center gap-3"><a href="map.html" class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">바로 체험하기</a></div>
+<button class="md:hidden p-2 text-blue-800" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+</div>
+<div id="mobile-menu" class="hidden md:hidden border-t border-sky-200 bg-sky-50 px-6 py-4 space-y-3">
+<a href="analysis.html" class="block text-blue-800 font-medium py-2">입지분석</a>
+<a href="map.html" class="block text-blue-800 font-medium py-2">지도 탐색</a>
+<a href="pricing.html" class="block text-blue-800 font-medium py-2">요금제</a>
+<a href="reports.html" class="block text-blue-800 font-medium py-2">리포트</a>
+<a href="promo.html" class="block text-blue-800 font-medium py-2">홍보</a>
+<span class="block text-blue-600 font-semibold py-2">FAQ</span>
+<a href="manual.html" class="block text-blue-800 font-medium py-2">사용자 매뉴얼</a>
+<hr class="border-gray-100">
+<a href="map.html" class="block bg-blue-600 text-white text-center py-2.5 rounded-lg font-semibold">바로 체험하기</a>
+</div>
+</header>
+
+<main>
+
+<!-- FAQ Title -->
+<section class="py-16">
+<div class="max-w-3xl mx-auto px-6">
+<div class="text-center mb-12">
+<h1 class="text-3xl md:text-4xl font-bold">자주 묻는 질문</h1>
+<p class="mt-3 text-gray-500">궁금한 점이 있으시면 아래에서 찾아보세요</p>
+</div>
+<div id="faq-full-content"></div>
+</div>
+</section>
+
+<!-- Contact CTA -->
+<section class="py-12 bg-gray-50">
+<div class="max-w-2xl mx-auto px-6 text-center">
+<h2 class="text-xl font-bold">찾으시는 답변이 없으신가요?</h2>
+<p class="mt-2 text-gray-600">고객센터로 문의해 주시면 빠르게 답변드리겠습니다.</p>
+<div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+<a href="index.html#contact" class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">문의하기</a>
+<a href="mailto:jaiwshim@gmail.com" class="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition">이메일: jaiwshim@gmail.com</a>
+</div>
+</div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-900 text-gray-400 py-12"><div class="max-w-7xl mx-auto px-6">
+<div class="grid md:grid-cols-4 gap-8">
+<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴트맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="map.html" class="block hover:text-white transition">지도 탐색</a><a href="pricing.html" class="block hover:text-white transition">요금제</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="faq.html" class="block hover:text-white transition">자주 묻는 질문</a><a href="manual.html" class="block hover:text-white transition">사용자 매뉴얼</a><a href="index.html#contact" class="block hover:text-white transition">문의하기</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>심재우 대표</p><p><a href="mailto:jaiwshim@gmail.com" class="hover:text-white">jaiwshim@gmail.com</a></p><p><a href="tel:010-2397-5734" class="hover:text-white">010-2397-5734</a></p></div></div>
+</div>
+<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴트맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> · <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
+</div></footer>
+
+<script>
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded',function(){
+  var cats=[
+    {cat:"서비스 일반",items:[
+      {q:"덴트맵은 어떤 서비스?",a:"치과 개원 준비를 위한 데이터 기반 입지 분석, 투자 시뮬레이션, AI 입지분석 리포트를 제공하는 서비스입니다."},
+      {q:"분석 데이터 출처?",a:"국민건강보험공단, 통계청, 소상공인진흥공단, 국토교통부 등 공공기관 공식 데이터 기반."},
+      {q:"치과 외 다른 의료기관?",a:"현재 치과 특화. 향후 의과, 한의과, 약국 등 확장 예정."}
+    ]},
+    {cat:"요금 및 결제",items:[
+      {q:"무료 범위?",a:"전국 지도 탐색, 치과 분포 확인, 월 1회 입지 분석(종합 점수)."},
+      {q:"해지 가능?",a:"위약금 없이 언제든 해지 가능. 7일 이내 전액 환불."},
+      {q:"연간 결제 혜택?",a:"연간 결제 시 2개월분 무료 (약 17% 할인)."}
+    ]},
+    {cat:"분석 및 리포트",items:[
+      {q:"AI 점수 산출 방법?",a:"인구/수요(25%), 경쟁(25%), 비용(20%), 접근성(15%), 성장성(15%)의 5축."},
+      {q:"AI 리포트 법적 효력?",a:"참고 자료이며 법적 효력 없음."},
+      {q:"리포트 활용?",a:"PDF 다운로드하여 대출 상담 시 사업 계획 자료로 활용 가능."}
+    ]}
+  ];
+
+  var fh='';
+  cats.forEach(function(c){
+    fh+='<div class="mb-10"><h2 class="text-lg font-bold mb-4">'+c.cat+'</h2><div class="space-y-3">';
+    c.items.forEach(function(f){
+      fh+='<details class="bg-white rounded-xl shadow-sm border border-gray-100 group">';
+      fh+='<summary class="p-5 font-semibold cursor-pointer flex items-center justify-between text-sm md:text-base">'+f.q;
+      fh+='<svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>';
+      fh+='</summary>';
+      fh+='<div class="px-5 pb-5 text-gray-600 text-sm">'+f.a+'</div>';
+      fh+='</details>';
+    });
+    fh+='</div></div>';
+  });
+
+  document.getElementById('faq-full-content').innerHTML=fh;
+});
+</script>
+</body>
+</html>

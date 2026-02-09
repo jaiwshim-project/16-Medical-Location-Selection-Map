@@ -88,13 +88,13 @@ function renderTestBanner(){
 }
 
 function renderHeader(active){
-  const nav=[{href:'map.html',label:'지도 탐색',key:'map'},{href:'pricing.html',label:'요금제',key:'pricing'},{href:'faq.html',label:'FAQ',key:'faq'}];
-  return `<header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-100">
+  const nav=[{href:'map.html',label:'지도 탐색',key:'map'},{href:'pricing.html',label:'요금제',key:'pricing'},{href:'reports.html',label:'리포트',key:'reports'},{href:'promo.html',label:'홍보',key:'promo'},{href:'faq.html',label:'FAQ',key:'faq'}];
+  return `<header class="sticky top-0 z-50 bg-sky-100/90 backdrop-blur border-b border-sky-200">
 <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-gray-900">덴트맵 <span class="text-base font-semibold text-gray-500">치과개원 입지분석</span></span></a>
+<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴트맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
 <nav class="hidden md:flex items-center gap-8">${nav.map(n=>`<a href="${n.href}" class="text-sm ${active===n.key?'text-blue-600 font-semibold':'text-gray-600 hover:text-blue-600'} transition">${n.label}</a>`).join('')}</nav>
 <div class="hidden md:flex items-center gap-3"><a href="map.html" class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">바로 체험하기</a></div>
-<button id="mobile-toggle" class="md:hidden p-2" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<button id="mobile-toggle" class="md:hidden p-2 text-blue-800" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 </div>
 <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-6 py-4 space-y-3">
 ${nav.map(n=>`<a href="${n.href}" class="block text-gray-700 py-2">${n.label}</a>`).join('')}
@@ -107,12 +107,12 @@ function renderFooter(){
   return `<footer class="bg-gray-900 text-gray-400 py-12">
 <div class="max-w-7xl mx-auto px-6">
 <div class="grid md:grid-cols-4 gap-8">
-<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴트맵 <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
+<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴트맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
 <div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="map.html" class="block hover:text-white transition">지도 탐색</a><a href="pricing.html" class="block hover:text-white transition">요금제</a></div></div>
 <div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="faq.html" class="block hover:text-white transition">자주 묻는 질문</a><a href="contact.html" class="block hover:text-white transition">문의하기</a></div></div>
-<div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>hello@dentmap.co.kr</p><p>1600-0000</p></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>심재우 대표</p><p><a href="mailto:jaiwshim@gmail.com" class="hover:text-white">jaiwshim@gmail.com</a></p><p><a href="tel:010-2397-5734" class="hover:text-white">010-2397-5734</a></p></div></div>
 </div>
-<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴트맵 치과개원 입지분석 | 사업자등록번호: 000-00-00000</p><p class="mt-2">&copy; 2025 DentMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
+<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴트맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> · <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
 </div></footer>`;
 }
 
