@@ -36,8 +36,8 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
   <nav class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
     <!-- 좌: 로고 -->
     <a href="/" class="flex items-center gap-2">
-      <img src="/logo.svg" alt="DentMap" class="h-8" />
-      <span class="font-bold text-xl">덴트맵</span>
+      <img src="/logo.svg" alt="DentalMap" class="h-8" />
+      <span class="font-bold text-xl">덴탈맵</span>
     </a>
 
     <!-- 중앙: 메뉴 (데스크톱) -->
@@ -65,7 +65,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
     <!-- 좌: 텍스트 -->
     <div class="flex flex-col justify-center">
       <h1 class="text-4xl md:text-6xl font-bold leading-tight">
-        개원,<br/>감이 아니라<br/>
+        개원, 상권분석 및 입지선정<br/>감이 아니라<br/>
         <span class="text-blue-600">데이터</span>로.
       </h1>
       <p class="mt-6 text-lg text-gray-600 leading-relaxed">
@@ -85,7 +85,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
 
     <!-- 우: 대시보드 목업 이미지/영상 -->
     <div class="relative">
-      <img src="/hero-dashboard.png" alt="덴트맵 대시보드"
+      <img src="/hero-dashboard.png" alt="덴탈맵 대시보드"
            class="rounded-2xl shadow-2xl" />
       <!-- 플로팅 카드 -->
       <div class="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg p-4">
@@ -146,7 +146,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
       </div>
     </div>
     <p class="mt-10 text-xl text-blue-600 font-semibold">
-      덴트맵은 이 모든 과정을 데이터로 바꿉니다.
+      덴탈맵은 이 모든 과정을 데이터로 바꿉니다.
     </p>
   </div>
 </section>
@@ -276,7 +276,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
         <div class="flex text-yellow-400 text-lg">★★★★★</div>
         <p class="mt-4 text-gray-700 leading-relaxed">
           "부동산 5군데 돌아다닌 것보다
-          덴트맵 30분이 더 유용했습니다."
+          덴탈맵 30분이 더 유용했습니다."
         </p>
         <div class="mt-6 flex items-center gap-3">
           <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
@@ -353,7 +353,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
 <footer class="bg-gray-900 text-gray-400 py-12">
   <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-4 gap-8">
     <div>
-      <p class="text-white font-bold text-lg">DentMap 덴트맵</p>
+      <p class="text-white font-bold text-lg">DentalMap 덴탈맵</p>
       <p class="mt-2 text-sm">데이터로 찾는 최적의 개원 입지</p>
     </div>
     <div>
@@ -377,7 +377,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
   </div>
   <div class="max-w-6xl mx-auto px-6 mt-8 pt-8 border-t border-gray-800 text-xs">
     <p>사업자등록번호: 000-00-00000 | 대표: ○○○</p>
-    <p class="mt-1">© 2025 DentMap. All rights reserved.</p>
+    <p class="mt-1">© 2025 DentalMap. All rights reserved.</p>
     <p class="mt-1">본 서비스의 분석 결과는 참고용이며, 최종 의사결정에 대한 법적 책임은 사용자에게 있습니다.</p>
   </div>
 </footer>
@@ -391,7 +391,7 @@ MVP 기준 예상 인프라 비용: 월 30~50만원
 <div class="h-screen flex flex-col">
   <!-- 상단 바 -->
   <header class="h-14 border-b flex items-center px-4 gap-4">
-    <a href="/">← 덴트맵</a>
+    <a href="/">← 덴탈맵</a>
     <input type="search" placeholder="지역명, 주소를 입력하세요"
            class="flex-1 max-w-md border rounded-lg px-4 py-2" />
     <div class="flex gap-2">

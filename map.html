@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>덴트맵AI 치과개원 입지분석 — 지도 탐색</title>
+<title>덴탈맵AI 치과개원 입지분석 — 지도 탐색</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -42,7 +42,7 @@ body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif;margin:
 <!-- HEADER -->
 <header class="sticky top-0 z-50 bg-sky-100/90 backdrop-blur border-b border-sky-200">
 <div class="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
-<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴트맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
+<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴탈맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
 <nav class="hidden md:flex items-center gap-8">
 <a href="analysis.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">입지분석</a>
 <span class="text-sm text-blue-600 font-semibold border-b-2 border-blue-600 pb-0.5">지도 탐색</span>
@@ -411,7 +411,7 @@ function showRegionClinicsOnMap(r,clinics,spots){
   spots.forEach(s=>{
     const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="position:relative"><div style="position:absolute;inset:-6px;background:rgba(245,158,11,0.2);border-radius:50%;animation:marker-pulse 2s infinite"></div><div style="position:relative;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(245,158,11,0.5)">⭐</div></div>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(exploreMap);
     m.bindTooltip(s.label,{permanent:true,direction:'right',offset:[10,0],className:'rec-tooltip'});
-    m.bindPopup('<div style="min-width:200px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴트맵 추천</div><div style="font-weight:bold;margin-top:6px">'+s.label+'</div><div style="font-size:24px;font-weight:bold;color:#3b82f6;margin:4px 0">'+s.score+'점 <span style="font-size:12px;color:#6b7280">'+s.grade+'등급</span></div><div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px">'+s.reasons.map(x=>'✅ '+x).join('<br>')+'</div></div>');
+    m.bindPopup('<div style="min-width:200px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴탈맵 추천</div><div style="font-weight:bold;margin-top:6px">'+s.label+'</div><div style="font-size:24px;font-weight:bold;color:#3b82f6;margin:4px 0">'+s.score+'점 <span style="font-size:12px;color:#6b7280">'+s.grade+'등급</span></div><div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px">'+s.reasons.map(x=>'✅ '+x).join('<br>')+'</div></div>');
     exploreMarkers.push(m);
   });
   const pts=[[r.lat,r.lng],...clinics.map(c=>[c.lat,c.lng]),...spots.map(s=>[s.lat,s.lng])];
@@ -490,7 +490,7 @@ function renderClinicListPanel(r,clinics,spots){
   /* recommended spots */
   spots.forEach(s=>{
     h+='<div class="p-4 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50/50">'
-    +'<div class="flex items-center gap-1.5 mb-1"><span class="text-sm">⭐</span><span class="text-[11px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">덴트맵 추천 개원 위치</span></div>'
+    +'<div class="flex items-center gap-1.5 mb-1"><span class="text-sm">⭐</span><span class="text-[11px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">덴탈맵 추천 개원 위치</span></div>'
     +'<h3 class="font-bold text-amber-900 text-sm">'+s.label+'</h3>'
     +'<div class="flex items-baseline gap-2 mt-0.5"><span class="text-xl font-bold text-blue-600">'+s.score+'점</span><span class="text-[11px] text-gray-400">'+s.grade+'등급</span></div>'
     +'<p class="text-xs text-gray-600 mt-1">'+s.reasons.slice(0,2).join(' · ')+'</p>'
@@ -542,12 +542,12 @@ document.addEventListener('DOMContentLoaded',function(){
 <!-- FOOTER -->
 <footer class="bg-gray-900 text-gray-400 py-12"><div class="max-w-7xl mx-auto px-6">
 <div class="grid md:grid-cols-4 gap-8">
-<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴트맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
+<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴탈맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
 <div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="analysis.html" class="block hover:text-white transition">입지분석</a><a href="map.html" class="block hover:text-white transition">지도 탐색</a><a href="pricing.html" class="block hover:text-white transition">요금제</a></div></div>
 <div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="faq.html" class="block hover:text-white transition">자주 묻는 질문</a><a href="manual.html" class="block hover:text-white transition">사용자 매뉴얼</a><a href="index.html" class="block hover:text-white transition">홈으로</a></div></div>
 <div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>심재우 대표</p><p><a href="mailto:jaiwshim@gmail.com" class="hover:text-white">jaiwshim@gmail.com</a></p><p><a href="tel:010-2397-5734" class="hover:text-white">010-2397-5734</a></p></div></div>
 </div>
-<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴트맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> · <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
+<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴탈맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> · <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentalMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
 </div></footer>
 
 </body>

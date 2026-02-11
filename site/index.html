@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>덴트맵AI 치과개원 입지분석 — 데이터로 찾는 최적의 치과 개원 입지</title>
+<title>덴탈맵AI 치과개원 입지분석 — 데이터로 찾는 최적의 치과 개원 입지</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
@@ -17,7 +17,7 @@
 <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 py-20">
 <div class="flex flex-col justify-center">
 <div class="inline-flex items-center gap-2 bg-green-50 text-green-700 text-sm font-medium px-4 py-2 rounded-full w-fit mb-6"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> 테스트 모드 — 로그인 없이 모든 기능 체험 가능</div>
-<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-gray-900">개원,<br>감이 아니라<br><span class="text-blue-600">데이터</span>로.</h1>
+<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-gray-900">개원, 상권분석 및 입지선정<br>감이 아니라<br><span class="text-blue-600">데이터</span>로.</h1>
 <p class="mt-6 text-lg text-gray-600 leading-relaxed">인구, 경쟁, 임대료, 교통, 성장성 &mdash;<br class="hidden sm:block">5가지 핵심 데이터를 AI가 분석하고,<br class="hidden sm:block">선생님에게 딱 맞는 개원 입지를 추천합니다.</p>
 <div class="mt-8">
 <div class="flex flex-col sm:flex-row gap-2 max-w-lg">
@@ -54,7 +54,7 @@
 <div class="max-w-4xl mx-auto px-6 text-center">
 <h2 class="text-3xl md:text-4xl font-bold">치과 원장 10명 중 7명,<br><span class="text-red-500">&ldquo;입지 선정이 가장 어려웠다&rdquo;</span></h2>
 <div class="mt-12 grid md:grid-cols-2 gap-4" id="problems"></div>
-<p class="mt-10 text-xl text-blue-600 font-semibold">덴트맵은 이 모든 과정을 데이터로 바꿉니다.</p>
+<p class="mt-10 text-xl text-blue-600 font-semibold">덴탈맵은 이 모든 과정을 데이터로 바꿉니다.</p>
 </div>
 </section>
 
@@ -98,7 +98,7 @@ document.getElementById('problems').innerHTML=["부동산 중개사의 주관적
 
 document.getElementById('features').innerHTML=[{i:"📍",b:"bg-blue-100",t:"입지 히트맵",s:"어디에 열어야 할까?",d:"전국 치과 분포, 인구밀도, 유동인구를 히트맵으로 한눈에 파악하세요."},{i:"📊",b:"bg-green-100",t:"AI 입지 점수",s:"이 자리, 몇 점일까?",d:"인구·경쟁·비용·접근성·성장성 5개 축으로 100점 만점의 객관적 점수를 확인하세요."},{i:"💰",b:"bg-yellow-100",t:"투자 시뮬레이터",s:"얼마가 필요할까?",d:"보증금, 인테리어, 장비, 인건비까지 맞춤형 투자금과 손익분기를 계산합니다."},{i:"⚖️",b:"bg-purple-100",t:"개업 vs 인수",s:"새로 열까, 인수할까?",d:"같은 지역의 신규 개원과 인수 매물을 동시에 비교하고 최적 선택을 안내합니다."},{i:"📋",b:"bg-pink-100",t:"AI 입지분석 리포트",s:"결정을 도와주는 리포트",d:"점수와 분석을 종합한 AI 리포트로 은행 상담, 파트너 설득에 바로 활용하세요."},{i:"🔜",b:"bg-blue-200",t:"더 많은 기능",s:"계속 업데이트",d:"전문가 매칭, 금융 연계, 개원 후 모니터링... 계속 추가됩니다.",c:true}].map(f=>`<div class="rounded-2xl p-8 transition ${f.c?'bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-dashed border-blue-200':'bg-white shadow-sm hover:shadow-md'}"><div class="w-12 h-12 ${f.b} rounded-xl flex items-center justify-center text-2xl">${f.i}</div><p class="mt-3 text-sm text-blue-600 font-medium">${f.s}</p><h3 class="mt-1 text-xl font-bold ${f.c?'text-blue-700':'text-gray-900'}">${f.t}</h3><p class="mt-2 ${f.c?'text-blue-600':'text-gray-600'} leading-relaxed">${f.d}</p></div>`).join('');
 
-document.getElementById('testimonials').innerHTML=[{q:"부동산 5군데 돌아다닌 것보다 덴트맵 30분이 더 유용했습니다.",n:"김○○ 원장",l:"서울 성동구 개원"},{q:"인수할 뻔한 치과가 점수 42점이었습니다. 덕분에 큰 실수를 피했어요.",n:"이○○ 원장",l:"경기 용인 개원"},{q:"투자금 시뮬레이션 결과를 은행에 제출했더니 대출 상담이 훨씬 수월했습니다.",n:"박○○ 원장",l:"대전 유성구 개원"}].map(t=>`<div class="bg-white rounded-2xl p-8 shadow-sm"><div class="text-yellow-400 text-lg">★★★★★</div><p class="mt-4 text-gray-700 leading-relaxed">&ldquo;${t.q}&rdquo;</p><div class="mt-6 flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">${t.n[0]}</div><div><p class="font-semibold text-sm">${t.n}</p><p class="text-xs text-gray-400">${t.l}</p></div></div></div>`).join('');
+document.getElementById('testimonials').innerHTML=[{q:"부동산 5군데 돌아다닌 것보다 덴탈맵 30분이 더 유용했습니다.",n:"김○○ 원장",l:"서울 성동구 개원"},{q:"인수할 뻔한 치과가 점수 42점이었습니다. 덕분에 큰 실수를 피했어요.",n:"이○○ 원장",l:"경기 용인 개원"},{q:"투자금 시뮬레이션 결과를 은행에 제출했더니 대출 상담이 훨씬 수월했습니다.",n:"박○○ 원장",l:"대전 유성구 개원"}].map(t=>`<div class="bg-white rounded-2xl p-8 shadow-sm"><div class="text-yellow-400 text-lg">★★★★★</div><p class="mt-4 text-gray-700 leading-relaxed">&ldquo;${t.q}&rdquo;</p><div class="mt-6 flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">${t.n[0]}</div><div><p class="font-semibold text-sm">${t.n}</p><p class="text-xs text-gray-400">${t.l}</p></div></div></div>`).join('');
 
 document.querySelector('[data-pricing]').innerHTML=buildPricingHTML();
 

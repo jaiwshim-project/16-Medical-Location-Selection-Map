@@ -1,7 +1,7 @@
 {
   "name": "dentmap-server",
   "version": "1.0.0",
-  "description": "DentMap — 치과 개원 입지 분석 서버 (공공데이터 API 프록시)",
+  "description": "DentalMap — 치과 개원 입지 분석 서버 (공공데이터 API 프록시)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
