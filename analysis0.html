@@ -848,9 +848,12 @@ async function renderAnalysisMap(r){
 }
 function renderClinicList(r,clinics,spots){
   const el=document.getElementById('clinic-list-container');if(!el)return;
-  let h='<div class="grid md:grid-cols-2 gap-4 mt-4">';
-  spots.forEach(s=>{h+='<div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl p-5">'
-    +'<div class="flex items-center gap-2 mb-3"><span class="text-lg">⭐</span><span class="text-xs font-bold text-amber-800 bg-amber-200 px-2.5 py-0.5 rounded-full">덴탈맵 추천</span><span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-auto">'+s.grade+'등급</span></div>'
+  var spotBorders=['border-amber-300','border-violet-300','border-emerald-300'];
+  var spotBgs=['from-amber-50 to-orange-50','from-violet-50 to-purple-50','from-emerald-50 to-teal-50'];
+  var spotBadgeBg=['bg-amber-200 text-amber-800','bg-violet-200 text-violet-800','bg-emerald-200 text-emerald-800'];
+  let h='<div class="grid md:grid-cols-3 gap-4 mt-4">';
+  spots.forEach(function(s,si){var rank=si+1;h+='<div class="bg-gradient-to-br '+spotBgs[si]+' border-2 '+spotBorders[si]+' rounded-xl p-5">'
+    +'<div class="flex items-center gap-2 mb-3"><span class="text-lg">⭐</span><span class="text-xs font-bold '+spotBadgeBg[si]+' px-2.5 py-0.5 rounded-full">'+rank+'순위 추천</span><span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-auto">'+s.grade+'등급</span></div>'
     +'<h3 class="font-bold text-base">'+s.label+'</h3>'
     +'<p class="text-3xl font-bold text-blue-600 mt-1">'+s.score+'<span class="text-base text-gray-400 font-medium">점</span></p>'
     +'<ul class="mt-3 space-y-1.5">'+s.reasons.map(x=>'<li class="text-sm text-gray-700 flex items-start gap-1.5"><span class="text-green-500 mt-0.5 shrink-0">✓</span>'+x+'</li>').join('')+'</ul>'
@@ -880,6 +883,7 @@ function renderClinicList(r,clinics,spots){
     +'<span class="text-gray-500">손익분기 <b class="text-violet-700">약 '+s.breakEvenMo+'개월</b></span>'
     +'</div>'
     +'</div>'});
+  if(spots.length===0){h+='<div class="col-span-3 text-center text-gray-400 py-8">추천 위치를 계산할 수 없습니다 (주변 치과 데이터 부족)</div>'}
   h+='</div>';
   const activeCount=clinics.filter(c=>c.status==='영업중').length;
   const forSaleCount=clinics.filter(c=>c.forSale).length;
