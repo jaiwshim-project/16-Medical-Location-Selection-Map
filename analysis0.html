@@ -108,6 +108,7 @@ function formatPrice(p){return p===0?'0':fmt(p)}
 /* ── Region Generation ── */
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
 function seededRand(seed,min,max){seed=(seed*9301+49297)%233280;return min+Math.floor((seed/233280)*(max-min+1))}
+function distM(lat1,lng1,lat2,lng2){const dLat=(lat2-lat1)*111320;const dLng=(lng2-lng1)*111320*Math.cos((lat1+lat2)/2*Math.PI/180);return Math.sqrt(dLat*dLat+dLng*dLng)}
 
 /* ── Commercial Zone Anchors ── */
 const CZ={
@@ -523,19 +524,40 @@ function generateNearbyClinics(r){
       status:status,forSale:forSale,estimatedAcquisitionPrice:estAcqPrice})}
   return clinics;
 }
-function generateRecommendedSpots(r){
+function generateRecommendedSpots(r,clinics){
   const h=hashStr(r.dong+'_rec'),spots=[];
   const anchors=getCommercialAnchors(r);
-  const reasons=[['경쟁 공백 지역 — 반경 300m 내 치과 없음','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴','주차장 확보 용이']];
-  for(let i=0;i<2;i++){const s=h*50+i;
-    let sLat,sLng;
-    if(anchors&&anchors.length>=2){const aIdx=(anchors.length-1-i)%anchors.length;const anc=anchors[aIdx];sLat=anc.lat+seededRand(s*3,-8,8)/10000;sLng=anc.lng+seededRand(s*5,-10,10)/10000}
-    else if(anchors&&anchors.length===1){const ag=(seededRand(s,0,360)*Math.PI)/180,d=seededRand(s*3,15,25)/10000;sLat=anchors[0].lat+Math.cos(ag)*d;sLng=anchors[0].lng+Math.sin(ag)*d}
-    else{const ag=(seededRand(s,0,360)*Math.PI)/180,d=seededRand(s*3,15,25)/10000;sLat=r.lat+Math.cos(ag)*d;sLng=r.lng+Math.sin(ag)*d}
-    spots.push({lat:sLat,lng:sLng,
+  /* ── Step 1: 상권 앵커 주변에 후보 지점 격자 생성 ── */
+  const cands=[];
+  if(anchors&&anchors.length>0){
+    anchors.forEach(function(anc,ai){
+      for(var k=0;k<10;k++){var ag=(k*36+seededRand(h+ai*100+k,0,15))*Math.PI/180,d=seededRand(h+ai*100+k*7,12,40)/10000;
+        cands.push({lat:anc.lat+Math.cos(ag)*d,lng:anc.lng+Math.sin(ag)*d})}
+      cands.push({lat:anc.lat+seededRand(h+ai*200,-4,4)/10000,lng:anc.lng+seededRand(h+ai*201,-4,4)/10000})});
+  }else{for(var k=0;k<16;k++){var ag=(k*22.5)*Math.PI/180,d=seededRand(h+k*7,15,35)/10000;
+    cands.push({lat:r.lat+Math.cos(ag)*d,lng:r.lng+Math.sin(ag)*d})}}
+  /* ── Step 2: 각 후보의 최소 치과 거리(경쟁 공백) 계산 ── */
+  var active=clinics?clinics.filter(function(c){return c.status==='영업중'}):[];
+  cands.forEach(function(cd){var mn=Infinity;
+    active.forEach(function(cl){var dm=distM(cd.lat,cd.lng,cl.lat,cl.lng);if(dm<mn)mn=dm});
+    cd.gap=mn});
+  /* ── Step 3: 공백 큰 순 정렬 → 상위 2개 선택 (서로 200m 이상 떨어진) ── */
+  cands.sort(function(a,b){return b.gap-a.gap});
+  var picked=[];
+  for(var ci=0;ci<cands.length&&picked.length<2;ci++){
+    var ok=true;for(var pi=0;pi<picked.length;pi++){if(distM(cands[ci].lat,cands[ci].lng,picked[pi].lat,picked[pi].lng)<200){ok=false;break}}
+    if(ok)picked.push(cands[ci])}
+  /* ── Step 4: 추천 지점 생성 (실측 거리 기반 사유 포함) ── */
+  var baseReasons=[['유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],
+    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴','주차장 확보 용이']];
+  for(var i=0;i<picked.length;i++){var s=h*50+i,p=picked[i];
+    var gapM=Math.round(p.gap),gapTxt=gapM>=1000?'반경 '+Math.round(gapM/100)/10+'km 내 치과 없음 — 경쟁 공백 지역':'반경 '+gapM+'m 내 치과 없음 — 경쟁 공백 지역';
+    var rs=[gapTxt].concat(baseReasons[i]||baseReasons[0]);
+    spots.push({lat:p.lat,lng:p.lng,
       label:i===0?'추천 위치 A (최적)':'추천 위치 B (대안)',
       score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*5),
-      grade:i===0?'S':'A',reasons:reasons[i],
+      grade:i===0?'S':'A',reasons:rs,
+      nearestClinicM:gapM,
       rent:Math.max(5,r.avg_rent_pyeong-seededRand(s*9,1,4)),estPop:seededRand(s*11,8000,25000)})}
   return spots;
 }
@@ -553,7 +575,7 @@ function renderAnalysisMap(r){
   clinics.forEach(c=>{L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+(c.status==='영업중'?'#ef4444':c.status==='휴업'?'#eab308':'#9ca3af')+';color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.25);cursor:pointer">🦷</div>',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(analysisMap)
     .bindPopup(buildClinicPopup(c),{maxWidth:320})});
   /* recommended */
-  const spots=generateRecommendedSpots(r);
+  const spots=generateRecommendedSpots(r,clinics);
   spots.forEach(s=>{L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="position:relative"><div style="position:absolute;inset:-6px;background:rgba(245,158,11,0.2);border-radius:50%;animation:marker-pulse 2s infinite"></div><div style="position:relative;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 10px rgba(245,158,11,0.5)">⭐</div></div>',iconSize:[38,38],iconAnchor:[19,19]})}).addTo(analysisMap)
     .bindPopup('<div style="min-width:220px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴탈맵 추천</div><div style="font-size:15px;font-weight:bold;margin-top:6px">'+s.label+'</div><div style="display:flex;align-items:baseline;gap:6px;margin:4px 0"><span style="font-size:28px;font-weight:bold;color:#3b82f6">'+s.score+'점</span><span style="font-size:12px;background:#dbeafe;color:#2563eb;padding:1px 6px;border-radius:4px;font-weight:bold">'+s.grade+'등급</span></div><div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:2px">'+s.reasons.map(x=>'<div style="padding:2px 0">✅ '+x+'</div>').join('')+'</div><div style="margin-top:6px;font-size:11px;color:#6b7280">예상 임대료 '+s.rent+'만/평 · 주변 인구 '+fmt(s.estPop)+'명</div></div>')});
   /* fit bounds */
