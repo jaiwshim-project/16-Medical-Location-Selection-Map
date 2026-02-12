@@ -689,8 +689,9 @@ function generateRecommendedSpots(r,clinics){
   /* ── Step 1: 클러스터 중심 계산 ── */
   var cLat=0,cLng=0;active.forEach(function(c){cLat+=c.lat;cLng+=c.lng});
   cLat/=active.length;cLng/=active.length;
-  /* ── Step 2: 각 치과의 경쟁 압력 계산 → 경쟁 가장 적은 치과 = 최적 추천 위치 ── */
+  /* ── Step 2: 각 치과의 추천 점수 계산 (경쟁 압력 × 검색 중심 근접도) ── */
   /* 핵심 원리: 실제 치과 좌표를 그대로 사용 → 공원/하천 착지 원천 불가 */
+  var maxPressure=0;
   active.forEach(function(cl){
     var minD=Infinity,pressure=0,cnt400=0;
     active.forEach(function(other){
@@ -703,9 +704,16 @@ function generateRecommendedSpots(r,clinics){
     cl._nearDist=minD===Infinity?9999:minD;
     cl._pressure=pressure;
     cl._density=cnt400;
+    cl._distToCenter=distM(cl.lat,cl.lng,r.lat,r.lng);
+    if(pressure>maxPressure)maxPressure=pressure;
   });
-  /* 경쟁 압력 낮은 순 정렬 (= 틈새 큰 치과) */
-  var sorted=active.slice().sort(function(a,b){return a._pressure-b._pressure});
+  /* 종합 점수: 경쟁 낮을수록 + 검색 중심 가까울수록 높음 */
+  active.forEach(function(cl){
+    var compScore=maxPressure>0?1-cl._pressure/maxPressure:1;/* 0~1, 경쟁 적을수록 높음 */
+    var proxScore=Math.max(0,1-cl._distToCenter/500);/* 500m 이내일수록 높음, 500m 넘으면 0 */
+    cl._recScore=compScore*0.4+proxScore*0.6;/* 근접도 60% + 경쟁도 40% */
+  });
+  var sorted=active.slice().sort(function(a,b){return b._recScore-a._recScore});
   /* ── Step 3: 상위 2개 선택 (서로 200m+ 이격) ── */
   var picked=[];
   for(var ci=0;ci<sorted.length&&picked.length<2;ci++){
