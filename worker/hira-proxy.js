@@ -10,9 +10,11 @@
  * 엔드포인트:
  *   GET /clinics?lat=37.45&lng=126.73&radius=1000
  *   GET /clinics?sidoCd=110000&sgguCd=110023&numOfRows=100
+ *   GET /debug  — API 키 상태 및 테스트 호출
  */
 
 const HIRA_BASE = 'https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
+const FETCH_TIMEOUT = 8000; /* 8초 타임아웃 */
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -35,6 +37,11 @@ export default {
       return json({ status: 'ok', service: 'dentalmap-hira-proxy' });
     }
 
+    /* debug endpoint */
+    if (url.pathname === '/debug') {
+      return handleDebug(env);
+    }
+
     /* /clinics endpoint */
     if (url.pathname === '/clinics') {
       return handleClinics(url, env);
@@ -43,6 +50,48 @@ export default {
     return json({ error: 'Not found. Use GET /clinics?lat=...&lng=...&radius=...' }, 404);
   }
 };
+
+/* 타임아웃 포함 fetch */
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const resp = await fetch(url, { ...options, signal: controller.signal });
+    return resp;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* 디버그 엔드포인트 — API 키 상태 확인 */
+async function handleDebug(env) {
+  const apiKey = env.HIRA_API_KEY;
+  const result = {
+    apiKeyConfigured: !!apiKey,
+    apiKeyLength: apiKey ? apiKey.length : 0,
+    apiKeyPreview: apiKey ? apiKey.substring(0, 8) + '...' : null,
+  };
+
+  if (apiKey) {
+    /* 간단한 테스트 호출 (1건만) */
+    try {
+      const testUrl = `${HIRA_BASE}?ServiceKey=${encodeURIComponent(apiKey)}&clCd=51&numOfRows=1&pageNo=1&_type=json`;
+      result.testUrl = testUrl.replace(apiKey, '***');
+      const resp = await fetchWithTimeout(testUrl, {
+        headers: { 'Accept': 'application/json' },
+      }, FETCH_TIMEOUT);
+      result.testStatus = resp.status;
+      result.testStatusText = resp.statusText;
+      const text = await resp.text();
+      result.testResponseLength = text.length;
+      result.testResponsePreview = text.substring(0, 300);
+    } catch (err) {
+      result.testError = err.message || String(err);
+    }
+  }
+
+  return json(result);
+}
 
 async function handleClinics(url, env) {
   const apiKey = env.HIRA_API_KEY;
@@ -59,54 +108,48 @@ async function handleClinics(url, env) {
   const numOfRows = url.searchParams.get('numOfRows') || '100';
   const pageNo = url.searchParams.get('pageNo') || '1';
 
-  /* HIRA API 호출 URL 구성 */
-  const params = new URLSearchParams({
-    ServiceKey: apiKey,
-    numOfRows: numOfRows,
-    pageNo: pageNo,
-    _type: 'json',
-  });
-
-  /* 치과의원(51) + 치과병원(41) 둘 다 조회하기 위해 두 번 호출 후 합침 */
+  /* 치과의원(51) + 치과병원(41) 병렬 호출 */
   const clCodes = ['51', '41'];
 
-  /* 좌표 기반 검색 */
-  if (lat && lng) {
-    params.set('yPos', lat);
-    params.set('xPos', lng);
-    params.set('radius', radius);
-  }
-  /* 지역코드 기반 검색 */
-  if (sidoCd) params.set('sidoCd', sidoCd);
-  if (sgguCd) params.set('sgguCd', sgguCd);
-
   try {
-    const allItems = [];
+    /* 두 코드에 대해 병렬 호출 */
+    const promises = clCodes.map(clCd => {
+      /* 각 호출마다 독립적인 params 생성 */
+      const params = new URLSearchParams({
+        ServiceKey: apiKey,
+        numOfRows: numOfRows,
+        pageNo: pageNo,
+        _type: 'json',
+        clCd: clCd,
+      });
+      if (lat && lng) {
+        params.set('yPos', lat);
+        params.set('xPos', lng);
+        params.set('radius', radius);
+      }
+      if (sidoCd) params.set('sidoCd', sidoCd);
+      if (sgguCd) params.set('sgguCd', sgguCd);
 
-    for (const clCd of clCodes) {
-      params.set('clCd', clCd);
       const apiUrl = `${HIRA_BASE}?${params.toString()}`;
 
-      const resp = await fetch(apiUrl, {
+      return fetchWithTimeout(apiUrl, {
         headers: { 'Accept': 'application/json' },
-        cf: { cacheTtl: 3600 }, /* 1시간 캐시 */
-      });
+      }, FETCH_TIMEOUT)
+        .then(async resp => {
+          if (!resp.ok) return [];
+          const data = await resp.json();
+          const items = data?.response?.body?.items?.item;
+          if (Array.isArray(items)) return items;
+          if (items) return [items];
+          return [];
+        })
+        .catch(() => []);
+    });
 
-      if (!resp.ok) continue;
+    const results = await Promise.all(promises);
+    const allItems = results.flat();
 
-      const data = await resp.json();
-      const body = data?.response?.body;
-      if (!body) continue;
-
-      const items = body.items?.item;
-      if (Array.isArray(items)) {
-        allItems.push(...items);
-      } else if (items) {
-        allItems.push(items); /* 결과 1개일 때 객체로 옴 */
-      }
-    }
-
-    /* 좌표 없는 항목 제거 & 정렬 (거리순 또는 이름순) */
+    /* 좌표 없는 항목 제거 */
     const clinics = allItems
       .filter(it => it.XPos && it.YPos)
       .map(it => ({

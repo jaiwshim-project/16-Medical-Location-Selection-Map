@@ -1,0 +1,111 @@
+name: Update Clinic Data (HIRA API)
+
+on:
+  schedule:
+    # 매주 월요일 오전 3시 (KST) = 일요일 18:00 UTC
+    - cron: '0 18 * * 0'
+  workflow_dispatch: # 수동 실행 가능
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch clinic data from HIRA API
+        env:
+          HIRA_API_KEY: ${{ secrets.HIRA_API_KEY }}
+        run: |
+          API_KEY="${HIRA_API_KEY}"
+          if [ -z "$API_KEY" ]; then
+            echo "::warning::HIRA_API_KEY secret not set, using hardcoded key"
+            API_KEY="f04ff78ae341a1b99e6b8c4810be12683ad7062e609e8d91cd4076282e7c715d"
+          fi
+
+          BASE_URL="https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"
+          RAW_DIR="data/raw"
+          mkdir -p "$RAW_DIR"
+
+          PAGE_SIZE=1000
+
+          echo "=== HIRA 전국 치과 데이터 다운로드 ==="
+
+          # 치과의원(51)
+          TOTAL_51=$(curl -sf --max-time 30 "${BASE_URL}?ServiceKey=${API_KEY}&clCd=51&numOfRows=1&pageNo=1&_type=json" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).response.body.totalCount))")
+          echo "치과의원 Total: $TOTAL_51"
+          PAGES_51=$(( (TOTAL_51 + PAGE_SIZE - 1) / PAGE_SIZE ))
+
+          for ((p=1; p<=PAGES_51; p++)); do
+            echo "  Page $p/$PAGES_51..."
+            curl -sf --max-time 120 "${BASE_URL}?ServiceKey=${API_KEY}&clCd=51&numOfRows=${PAGE_SIZE}&pageNo=${p}&_type=json" > "$RAW_DIR/51_page${p}.json"
+            sleep 0.5
+          done
+
+          # 치과병원(41)
+          TOTAL_41=$(curl -sf --max-time 30 "${BASE_URL}?ServiceKey=${API_KEY}&clCd=41&numOfRows=1&pageNo=1&_type=json" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).response.body.totalCount))")
+          echo "치과병원 Total: $TOTAL_41"
+          PAGES_41=$(( (TOTAL_41 + PAGE_SIZE - 1) / PAGE_SIZE ))
+
+          for ((p=1; p<=PAGES_41; p++)); do
+            echo "  Page $p/$PAGES_41..."
+            curl -sf --max-time 120 "${BASE_URL}?ServiceKey=${API_KEY}&clCd=41&numOfRows=${PAGE_SIZE}&pageNo=${p}&_type=json" > "$RAW_DIR/41_page${p}.json"
+            sleep 0.5
+          done
+
+          # 병합
+          echo "데이터 병합 중..."
+          node -e "
+          const fs=require('fs'),path=require('path');
+          const rawDir='$RAW_DIR';
+          const files=fs.readdirSync(rawDir).filter(f=>f.endsWith('.json')).sort();
+          let all=[];
+          files.forEach(f=>{
+            try{
+              const d=JSON.parse(fs.readFileSync(path.join(rawDir,f),'utf8'));
+              const items=d?.response?.body?.items?.item;
+              if(Array.isArray(items))all=all.concat(items);
+              else if(items)all.push(items);
+            }catch(e){console.error('Error:',f,e.message)}
+          });
+          console.log('Raw items:',all.length);
+          const clinics=all.filter(it=>{
+            const lat=parseFloat(it.YPos),lng=parseFloat(it.XPos);
+            return lat&&lng&&lat>33&&lat<39&&lng>124&&lng<132;
+          }).map(it=>({
+            n:it.yadmNm||'',a:it.addr||'',t:it.telno||'',
+            y:Math.round(parseFloat(it.YPos)*100000)/100000,
+            x:Math.round(parseFloat(it.XPos)*100000)/100000,
+            c:it.clCd,d:parseInt(it.drTotCnt)||0,
+            s:parseInt(it.detySdrCnt)||0,e:it.estbDd||0,
+            si:it.sidoCdNm||'',sg:it.sgguCdNm||'',
+          }));
+          console.log('Valid clinics:',clinics.length);
+          const output={meta:{source:'HIRA 건강보험심사평가원 병원정보서비스',fetched:new Date().toISOString().split('T')[0],totalCount:clinics.length},clinics};
+          fs.writeFileSync('data/clinics.json',JSON.stringify(output),'utf8');
+          const mb=(Buffer.byteLength(JSON.stringify(output))/1024/1024).toFixed(2);
+          console.log('Saved: data/clinics.json ('+mb+' MB)');
+          "
+
+          # raw 정리
+          rm -rf "$RAW_DIR"
+
+      - name: Check for changes
+        id: check
+        run: |
+          git diff --quiet data/clinics.json && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/clinics.json
+          git commit -m "chore: 치과 데이터 자동 업데이트 (HIRA API)"
+          git push
