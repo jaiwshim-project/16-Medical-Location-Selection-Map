@@ -526,38 +526,73 @@ function generateNearbyClinics(r){
 }
 function generateRecommendedSpots(r,clinics){
   const h=hashStr(r.dong+'_rec'),spots=[];
-  const anchors=getCommercialAnchors(r);
-  /* ── Step 1: 상권 앵커 주변에 후보 지점 격자 생성 ── */
-  const cands=[];
-  if(anchors&&anchors.length>0){
-    anchors.forEach(function(anc,ai){
-      for(var k=0;k<10;k++){var ag=(k*36+seededRand(h+ai*100+k,0,15))*Math.PI/180,d=seededRand(h+ai*100+k*7,12,40)/10000;
-        cands.push({lat:anc.lat+Math.cos(ag)*d,lng:anc.lng+Math.sin(ag)*d})}
-      cands.push({lat:anc.lat+seededRand(h+ai*200,-4,4)/10000,lng:anc.lng+seededRand(h+ai*201,-4,4)/10000})});
-  }else{for(var k=0;k<16;k++){var ag=(k*22.5)*Math.PI/180,d=seededRand(h+k*7,15,35)/10000;
-    cands.push({lat:r.lat+Math.cos(ag)*d,lng:r.lng+Math.sin(ag)*d})}}
-  /* ── Step 2: 각 후보의 최소 치과 거리(경쟁 공백) 계산 ── */
   var active=clinics?clinics.filter(function(c){return c.status==='영업중'}):[];
-  cands.forEach(function(cd){var mn=Infinity;
-    active.forEach(function(cl){var dm=distM(cd.lat,cd.lng,cl.lat,cl.lng);if(dm<mn)mn=dm});
-    cd.gap=mn});
-  /* ── Step 3: 공백 큰 순 정렬 → 상위 2개 선택 (서로 200m 이상 떨어진) ── */
-  cands.sort(function(a,b){return b.gap-a.gap});
+  if(active.length<2){/* 치과 2개 미만이면 상권 앵커 기반 폴백 */
+    var anc=getCommercialAnchors(r),s0=h*50;
+    for(var fi=0;fi<2;fi++){var sl=anc&&anc[fi%anc.length]?anc[fi%anc.length]:{lat:r.lat,lng:r.lng};
+      spots.push({lat:sl.lat+seededRand(s0+fi,-6,6)/10000,lng:sl.lng+seededRand(s0+fi*3,-8,8)/10000,
+        label:fi===0?'추천 위치 A (최적)':'추천 위치 B (대안)',score:Math.min(98,r.scores.total+seededRand(s0*7+fi,8,20)-fi*5),grade:fi===0?'S':'A',
+        reasons:['경쟁 치과가 거의 없는 블루오션 지역','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내'],
+        nearestClinicM:0,rent:Math.max(5,r.avg_rent_pyeong-seededRand(s0*9+fi,1,4)),estPop:seededRand(s0*11+fi,8000,25000)})}
+    return spots}
+  /* ── Step 1: 클러스터 중심 (상권 핵심) 계산 ── */
+  var cLat=0,cLng=0;active.forEach(function(c){cLat+=c.lat;cLng+=c.lng});
+  cLat/=active.length;cLng/=active.length;
+  var clusterR=0;active.forEach(function(c){clusterR+=distM(c.lat,c.lng,cLat,cLng)});clusterR/=active.length;
+  /* ── Step 2: 치과 쌍 사이 틈새 후보 지점 생성 ── */
+  var cands=[];
+  for(var i=0;i<active.length;i++){for(var j=i+1;j<active.length;j++){
+    var pd=distM(active[i].lat,active[i].lng,active[j].lat,active[j].lng);
+    if(pd<150||pd>800)continue;/* 150~800m 거리 쌍만 의미 있음 */
+    /* 중점 */
+    cands.push({lat:(active[i].lat+active[j].lat)/2,lng:(active[i].lng+active[j].lng)/2});
+    /* 1/3, 2/3 지점 */
+    cands.push({lat:active[i].lat*0.67+active[j].lat*0.33,lng:active[i].lng*0.67+active[j].lng*0.33});
+    cands.push({lat:active[i].lat*0.33+active[j].lat*0.67,lng:active[i].lng*0.33+active[j].lng*0.67});
+    /* 중점에서 수직 방향 50m 오프셋 (도로 반대편 상가) */
+    var mLat=(active[i].lat+active[j].lat)/2,mLng=(active[i].lng+active[j].lng)/2;
+    var dx=active[j].lng-active[i].lng,dy=active[j].lat-active[i].lat,len=Math.sqrt(dx*dx+dy*dy);
+    if(len>0){var nx=-dy/len,ny=dx/len,off=50/111320;
+      cands.push({lat:mLat+nx*off,lng:mLng+ny*off});cands.push({lat:mLat-nx*off,lng:mLng-ny*off})}
+  }}
+  /* 클러스터 중심 근처 추가 후보 (반경 내 격자) */
+  for(var k=0;k<12;k++){var ag=(k*30+seededRand(h+k,0,10))*Math.PI/180,d=Math.min(clusterR*0.6,300)/111320;
+    cands.push({lat:cLat+Math.cos(ag)*d,lng:cLng+Math.sin(ag)*d})}
+  /* ── Step 3: 각 후보의 입지 점수 계산 ── */
+  cands.forEach(function(cd){
+    /* 최소 치과 거리 (틈새 크기) */
+    var minD=Infinity;active.forEach(function(cl){var dm=distM(cd.lat,cd.lng,cl.lat,cl.lng);if(dm<minD)minD=dm});
+    cd.nearDist=minD;
+    /* 반경 400m 내 치과 수 (상권 밀도 증거) */
+    var cnt400=0;active.forEach(function(cl){if(distM(cd.lat,cd.lng,cl.lat,cl.lng)<=400)cnt400++});
+    cd.density=cnt400;
+    /* 클러스터 중심까지 거리 (중심성) */
+    cd.toCtr=distM(cd.lat,cd.lng,cLat,cLng);
+    /* 틈새 적합도 — 80~300m가 이상적, 너무 가깝거나 멀면 감점 */
+    var nf=minD<50?0:minD<120?minD/120:minD<350?1:Math.max(0.2,350/minD);
+    /* 중심성 — 클러스터 안쪽일수록 높음 */
+    var cf=cd.toCtr<clusterR*1.2?1:Math.max(0.3,clusterR*1.2/cd.toCtr);
+    /* 종합 점수 = 틈새적합도 × 상권밀도 × 중심성 */
+    cd.score=nf*(1+cd.density*0.5)*cf});
+  /* ── Step 4: 점수순 정렬 → 상위 2개 (서로 100m+ 이격) ── */
+  cands.sort(function(a,b){return b.score-a.score});
   var picked=[];
   for(var ci=0;ci<cands.length&&picked.length<2;ci++){
-    var ok=true;for(var pi=0;pi<picked.length;pi++){if(distM(cands[ci].lat,cands[ci].lng,picked[pi].lat,picked[pi].lng)<200){ok=false;break}}
+    if(cands[ci].nearDist<50)continue;/* 치과 바로 위는 제외 */
+    var ok=true;for(var pi=0;pi<picked.length;pi++){if(distM(cands[ci].lat,cands[ci].lng,picked[pi].lat,picked[pi].lng)<100){ok=false;break}}
     if(ok)picked.push(cands[ci])}
-  /* ── Step 4: 추천 지점 생성 (실측 거리 기반 사유 포함) ── */
+  /* ── Step 5: 추천 지점 데이터 생성 ── */
   var baseReasons=[['유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],
-    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴','주차장 확보 용이']];
+    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴']];
   for(var i=0;i<picked.length;i++){var s=h*50+i,p=picked[i];
-    var gapM=Math.round(p.gap),gapTxt=gapM>=1000?'반경 '+Math.round(gapM/100)/10+'km 내 치과 없음 — 경쟁 공백 지역':'반경 '+gapM+'m 내 치과 없음 — 경쟁 공백 지역';
-    var rs=[gapTxt].concat(baseReasons[i]||baseReasons[0]);
+    var gapM=Math.round(p.nearDist);
+    var rs=['주변 '+p.density+'개 치과 밀집 상권 내 틈새 (가장 가까운 치과 '+gapM+'m)'];
+    rs=rs.concat(baseReasons[i]||baseReasons[0]);
     spots.push({lat:p.lat,lng:p.lng,
       label:i===0?'추천 위치 A (최적)':'추천 위치 B (대안)',
       score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*5),
       grade:i===0?'S':'A',reasons:rs,
-      nearestClinicM:gapM,
+      nearestClinicM:gapM,surroundingClinics:p.density,
       rent:Math.max(5,r.avg_rent_pyeong-seededRand(s*9,1,4)),estPop:seededRand(s*11,8000,25000)})}
   return spots;
 }
