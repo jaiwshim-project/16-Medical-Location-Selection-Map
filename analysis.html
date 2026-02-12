@@ -24,7 +24,7 @@ input[type=range]{cursor:pointer}
 .clinic-tooltip::before{border-right-color:#e5e7eb!important}
 .rec-tooltip{background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;color:#92400e;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
 .rec-tooltip::before{border-right-color:#fbbf24!important}
-.map-legend{background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:0;font-size:12px;line-height:1.6;max-width:180px;color:#374151;overflow:hidden;max-height:60vh;overflow-y:auto}
+.map-legend{background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:0;font-size:12px;line-height:1.6;max-width:180px;color:#374151;overflow:hidden}
 #analysis-map .leaflet-top.leaflet-right .map-legend{margin-top:25%}
 .leaflet-control-attribution{font-size:9px!important;opacity:0.7}
 .map-legend h4{font-size:12px;font-weight:700;margin:0;color:#111827;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
@@ -964,7 +964,7 @@ function renderAnalysisContent(r){
   /* Main content area */
   let main='<div class="max-w-6xl mx-auto px-6 py-8">';
   /* Map */
-  main+='<div class="mb-8"><div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div id="analysis-map" style="aspect-ratio:4/3;width:100%;z-index:0"></div><div class="px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50 text-right">지도 우측 하단의 <b>범례</b>에서 마커·배지 설명을 확인하세요</div></div><div id="clinic-list-container" class="mt-4"></div></div>';
+  main+='<div class="mb-8"><div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div id="analysis-map" style="height:100vh;width:100%;z-index:0"></div><div class="px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50 text-right">지도 우측 하단의 <b>범례</b>에서 마커·배지 설명을 확인하세요</div></div><div id="clinic-list-container" class="mt-4"></div></div>';
   /* Tabs */
   main+='<div class="border-b border-gray-200 mb-8"><div class="flex gap-1"><button onclick="switchTab(\'overview\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='overview'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">종합 분석</button><button onclick="switchTab(\'investment\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='investment'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">투자 시뮬레이터</button><button onclick="switchTab(\'report\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='report'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">AI 입지분석 리포트</button></div></div>';
   main+=tc;
