@@ -677,54 +677,34 @@ function generateNearbyClinics(r){
 }
 function generateRecommendedSpots(r,clinics){
   const h=hashStr(r.dong+'_rec'),spots=[];
-  var active=clinics?clinics.filter(function(c){return c.status==='영업중'&&distM(c.lat,c.lng,r.lat,r.lng)<=300}):[];
-  if(active.length<2){/* 치과 2개 미만이면 상권 앵커 기반 폴백 */
-    var anc=getCommercialAnchors(r),s0=h*50;
-    for(var fi=0;fi<2;fi++){var sl=anc&&anc[fi%anc.length]?anc[fi%anc.length]:{lat:r.lat,lng:r.lng};
-      spots.push({lat:sl.lat+seededRand(s0+fi,-6,6)/10000,lng:sl.lng+seededRand(s0+fi*3,-8,8)/10000,
-        label:fi===0?'추천 위치 A (최적)':'추천 위치 B (대안)',score:Math.min(98,r.scores.total+seededRand(s0*7+fi,8,20)-fi*5),grade:fi===0?'S':'A',
-        reasons:['경쟁 치과가 거의 없는 블루오션 지역','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내'],
-        nearestClinicM:0,rent:Math.max(5,r.avg_rent_pyeong-seededRand(s0*9+fi,1,4)),estPop:seededRand(s0*11+fi,8000,25000)})}
-    return spots}
+  var active=clinics?clinics.filter(function(c){return c.status==='영업중'}):[];
   /* ── Step 1: 클러스터 중심 계산 ── */
   var cLat=0,cLng=0;active.forEach(function(c){cLat+=c.lat;cLng+=c.lng});
   cLat/=active.length;cLng/=active.length;
-  /* ── Step 2: 각 치과의 추천 점수 계산 (경쟁 압력 × 검색 중심 근접도) ── */
-  /* 핵심 원리: 실제 치과 좌표를 그대로 사용 → 공원/하천 착지 원천 불가 */
-  var maxPressure=0;
+  /* ── Step 2: 검색 중심 가까운 순 정렬 + 경쟁 압력 계산 ── */
   active.forEach(function(cl){
-    var minD=Infinity,pressure=0,cnt400=0;
+    var minD=Infinity,cnt400=0;
     active.forEach(function(other){
       if(cl===other)return;
       var d=distM(cl.lat,cl.lng,other.lat,other.lng);
       if(d<minD)minD=d;
-      if(d>0&&d<500)pressure+=1/(d*d);
       if(d<=400)cnt400++;
     });
     cl._nearDist=minD===Infinity?9999:minD;
-    cl._pressure=pressure;
     cl._density=cnt400;
     cl._distToCenter=distM(cl.lat,cl.lng,r.lat,r.lng);
-    if(pressure>maxPressure)maxPressure=pressure;
   });
-  /* 종합 점수: 경쟁 낮을수록 + 검색 중심 가까울수록 높음 */
-  active.forEach(function(cl){
-    var compScore=maxPressure>0?1-cl._pressure/maxPressure:1;/* 0~1, 경쟁 적을수록 높음 */
-    var proxScore=Math.max(0,1-cl._distToCenter/300);/* 300m 이내일수록 높음, 300m 넘으면 0 */
-    cl._recScore=compScore*0.4+proxScore*0.6;/* 근접도 60% + 경쟁도 40% */
-  });
-  var sorted=active.slice().sort(function(a,b){return b._recScore-a._recScore});
-  /* ── Step 3: 상위 2개 선택 (서로 200m+ 이격) ── */
+  /* 검색 중심 가까운 순 정렬 (1차 기준) */
+  var sorted=active.slice().sort(function(a,b){return a._distToCenter-b._distToCenter});
+  /* ── Step 3: 가까운 순서대로 2개 선택 (서로 100m+ 이격) ── */
   var picked=[];
   for(var ci=0;ci<sorted.length&&picked.length<2;ci++){
-    if(sorted[ci]._nearDist<80)continue;/* 바로 옆에 치과 있으면 제외 */
     var ok=true;
     for(var pi=0;pi<picked.length;pi++){
-      if(distM(sorted[ci].lat,sorted[ci].lng,picked[pi].lat,picked[pi].lng)<200){ok=false;break}
+      if(distM(sorted[ci].lat,sorted[ci].lng,picked[pi].lat,picked[pi].lng)<100){ok=false;break}
     }
     if(ok){
-      /* 실제 치과 좌표를 그대로 사용 (오프셋 없음 → 공원 착지 원천 불가) */
-      console.log('[DentalMap] 추천'+picked.length+': '+sorted[ci].name+' ('+sorted[ci].lat+','+sorted[ci].lng+') 경쟁압력='+sorted[ci]._pressure.toFixed(8)+' 최근접='+sorted[ci]._nearDist+'m');
+      console.log('[DentalMap] 추천'+picked.length+': '+sorted[ci].name+' ('+sorted[ci].lat+','+sorted[ci].lng+') 중심거리='+Math.round(sorted[ci]._distToCenter)+'m');
       picked.push({lat:sorted[ci].lat,lng:sorted[ci].lng,
         nearDist:sorted[ci]._nearDist,density:sorted[ci]._density,
         clinicName:sorted[ci].name});
