@@ -701,9 +701,9 @@ function generateRecommendedSpots(r,clinics){
     cl._recScore=cl._density*Math.min(cl._nearDist,300);
   });
   var sorted=active.slice().sort(function(a,b){return b._recScore-a._recScore});
-  /* ── Step 3: 점수 높은 순 2개 선택 (서로 100m+ 이격) ── */
+  /* ── Step 3: 점수 높은 순 3개 선택 (서로 100m+ 이격) ── */
   var picked=[];
-  for(var ci=0;ci<sorted.length&&picked.length<2;ci++){
+  for(var ci=0;ci<sorted.length&&picked.length<3;ci++){
     var ok=true;
     for(var pi=0;pi<picked.length;pi++){
       if(distM(sorted[ci].lat,sorted[ci].lng,picked[pi].lat,picked[pi].lng)<100){ok=false;break}
@@ -721,7 +721,8 @@ function generateRecommendedSpots(r,clinics){
   avgChairs=Math.round(avgChairs/acN);avgRev=Math.round(avgRev/acN);avgDaily=Math.round(avgDaily/acN);avgSize=Math.round(avgSize/acN);
   /* ── Step 6: 추천 지점 데이터 + 사업계획 지표 생성 ── */
   var baseReasons=[['유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],
-    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴']];
+    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴'],
+    ['주거·상업 복합 지역','직장인 밀집 구역','야간·주말 진료 수요 높음']];
   for(var i=0;i<picked.length;i++){var s=h*50+i,p=picked[i];
     var gapM=Math.round(p.nearDist);
     var rs=['주변 '+p.density+'개 치과 밀집 상권 내 틈새 (가장 가까운 치과 '+gapM+'m)'];
@@ -742,9 +743,9 @@ function generateRecommendedSpots(r,clinics){
     var monthlyProfit=estMonthRev-monthlyRent-Math.round(recStaff*350+recChairs*120);
     var breakEvenMo=monthlyProfit>0?Math.max(6,Math.min(36,Math.round(initInvest/monthlyProfit))):36;
     spots.push({lat:p.lat,lng:p.lng,
-      label:i===0?'추천 위치 A (최적)':'추천 위치 B (대안)',
-      score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*5),
-      grade:i===0?'S':'A',reasons:rs,
+      label:'추천 '+(i+1)+'순위',
+      score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*4),
+      grade:i===0?'S':i===1?'A':'A',reasons:rs,
       nearestClinicM:gapM,surroundingClinics:p.density,
       rent:rentPy,estPop:seededRand(s*11,8000,25000),
       /* 사업계획 지표 */
@@ -775,13 +776,14 @@ async function renderAnalysisMap(r){
     .bindPopup(buildClinicPopup(c),{maxWidth:320})});
   /* recommended — 반경 50m 추천 구역 원으로 표시 */
   const spots=generateRecommendedSpots(r,clinics);
-  var spotColors=['#f59e0b','#8b5cf6'];/* A=주황, B=보라 */
+  var spotColors=['#f59e0b','#8b5cf6','#10b981'];/* 1순위=주황, 2순위=보라, 3순위=초록 */
   spots.forEach(function(s,si){
     var clr=spotColors[si]||spotColors[0];
+    var rank=si+1;
     /* 반경 50m 원 */
     L.circle([s.lat,s.lng],{radius:50,color:clr,weight:2.5,opacity:0.85,fillColor:clr,fillOpacity:0.15,dashArray:'6 4'}).addTo(analysisMap);
     /* 원 중심 라벨 */
-    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+clr+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);text-align:center;line-height:1.3">⭐ '+(si===0?'추천 A':'추천 B')+'<br><span style="font-size:9px;opacity:0.9">반경 50m</span></div>',iconSize:[0,0],iconAnchor:[40,15]})}).addTo(analysisMap)
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+clr+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);text-align:center;line-height:1.3">⭐ '+rank+'순위<br><span style="font-size:9px;opacity:0.9">반경 50m</span></div>',iconSize:[0,0],iconAnchor:[40,15]})}).addTo(analysisMap)
     .bindPopup('<div style="min-width:260px;max-width:340px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴탈맵 추천</div><div style="font-size:15px;font-weight:bold;margin-top:6px">'+s.label+'</div><div style="display:flex;align-items:baseline;gap:6px;margin:4px 0"><span style="font-size:28px;font-weight:bold;color:#3b82f6">'+s.score+'점</span><span style="font-size:12px;background:#dbeafe;color:#2563eb;padding:1px 6px;border-radius:4px;font-weight:bold">'+s.grade+'등급</span></div>'
     +'<div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:2px">'+s.reasons.map(function(x){return'<div style="padding:2px 0">✅ '+x+'</div>'}).join('')+'</div>'
     +'<div style="margin-top:8px;padding:8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0">'
