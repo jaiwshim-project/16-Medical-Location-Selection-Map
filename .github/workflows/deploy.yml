@@ -22,9 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare deploy directory
+        run: |
+          mkdir -p _deploy/data
+          cp *.html _deploy/
+          cp -r data/clinics.json _deploy/data/ 2>/dev/null || true
+          echo "Deploy directory:"
+          ls -lh _deploy/
+          du -sh _deploy/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _deploy
       - id: deployment
         uses: actions/deploy-pages@v4

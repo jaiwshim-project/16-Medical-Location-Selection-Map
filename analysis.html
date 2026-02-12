@@ -1067,12 +1067,14 @@ function showSearchForm(){
   setTimeout(()=>{const inp=document.getElementById('hero-search-input');if(inp)inp.focus()},200);
 }
 
+function goAnalysis(){var v=(document.getElementById('analysis-search').value||'').trim();if(v)window.location.href='analysis.html?q='+encodeURIComponent(v)}
+
 /* ── Init on DOMContentLoaded ── */
 document.addEventListener('DOMContentLoaded',function(){
   const params=new URLSearchParams(window.location.search);
   const q=params.get('q');
   if(!q||!q.trim()){
-    window.location.href='analysis.html';
+    document.getElementById('analysis-root').innerHTML='<section class="min-h-[60vh] flex items-center justify-center"><div class="max-w-xl mx-auto px-6 text-center"><div class="text-6xl mb-6">📍</div><h1 class="text-3xl font-bold text-gray-900 mb-3">치과 개원 입지분석</h1><p class="text-gray-500 mb-8">분석할 지역명 또는 장소명을 입력하세요.<br>카카오 지오코딩으로 정확한 위치를 찾고, 반경 1km 내 실제 치과 데이터를 분석합니다.</p><div class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"><div class="relative flex-1"><svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="analysis-search" type="text" placeholder="예: 강남역, 판교, 인천경찰청" class="w-full pl-11 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition" onkeydown="if(event.key===\'Enter\')goAnalysis()"></div><button onclick="goAnalysis()" class="bg-blue-600 text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 whitespace-nowrap">분석 시작</button></div><div class="mt-6 flex flex-wrap gap-2 justify-center"><span class="text-xs text-gray-400">인기 분석 지역:</span>'+REGIONS.slice(0,6).map(function(r){return '<button onclick="window.location.href=\'analysis.html?q='+encodeURIComponent(r.dong)+'\'" class="text-xs bg-gray-100 hover:bg-blue-50 hover:text-blue-600 px-3 py-1.5 rounded-full transition">'+r.dong+'</button>'}).join('')+'</div></div></section>';
     return;
   }
   const name=q.trim();
