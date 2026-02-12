@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=31e72c61dc30008b32241bb45325abfa&libraries=services&autoload=false"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
 <style>
 html{scroll-behavior:smooth}
@@ -105,12 +106,327 @@ function getScoreColor(s){return s>=80?'text-blue-600':s>=60?'text-green-600':s>
 function getScoreBarColor(s){return s>=80?'bg-blue-500':s>=60?'bg-green-500':s>=40?'bg-yellow-500':'bg-red-500'}
 function formatPrice(p){return p===0?'0':fmt(p)}
 
+/* ── HIRA 정적 데이터 로드 (data/clinics.json) ── */
+let _clinicsCache=null;
+
+async function loadClinicData(){
+  if(_clinicsCache)return _clinicsCache;
+  try{
+    var resp=await fetch('data/clinics.json',{signal:AbortSignal.timeout(8000)});
+    if(!resp.ok)return null;
+    var data=await resp.json();
+    if(!data.clinics||data.clinics.length===0)return null;
+    _clinicsCache=data;
+    console.log('[DentalMap] HIRA 정적 데이터 로드 완료:',data.clinics.length,'개 치과,',data.meta?.fetched||'날짜미상');
+    return data;
+  }catch(e){console.warn('[DentalMap] clinics.json 로드 실패:',e.message);return null}
+}
+
+/* 경량 clinic → 상세 clinic 객체 변환 */
+function expandClinic(it,idx){
+  var h=hashStr(it.n+idx),s=h*100+idx;
+  var drCnt=Math.max(1,it.d||1);
+  var chairs=Math.max(2,Math.round(drCnt*2.5));
+  var estbDd=it.e;
+  var estYear=typeof estbDd==='number'&&estbDd>19500000?Math.floor(estbDd/10000):typeof estbDd==='string'&&estbDd.length>=4?parseInt(estbDd.substring(0,4)):2015;
+  if(estYear<1950||estYear>2026)estYear=2015;
+  var yearsOpen=Math.max(1,2025-estYear);
+  var yrFactor=Math.min(1.3,1+Math.max(0,yearsOpen-3)*0.02);
+  var sz=Math.max(15,Math.round(chairs*7+seededRand(s*41,-3,5)));
+  var annRev=Math.round((chairs*7000+sz*120+seededRand(s*43,-3000,8000))*yrFactor);
+  var monthlyRev=Math.round(annRev/12);
+  var dailyPat=Math.max(5,Math.round(chairs*seededRand(s*47,3,7)+seededRand(s*51,-3,5)));
+  var hygienistCnt=Math.max(1,Math.round(chairs*0.8)+seededRand(s*57,-1,1));
+  var totalStaff=drCnt+hygienistCnt+Math.max(1,seededRand(s*59,1,Math.round(chairs*0.5)+1));
+  var insClaims=Math.round(dailyPat*22*seededRand(s*61,60,85)/100);
+  var nonCovRatio=seededRand(s*63,25,65);
+  var naverRating=(seededRand(s*67,30,50)/10).toFixed(1);
+  var naverReviewCnt=Math.round(yearsOpen*seededRand(s*69,15,80)+seededRand(s*71,0,100));
+  var blogExposure=seededRand(s*73,50,2000);
+  var specPool=['임플란트','치아교정','심미보철','소아진료','잇몸치료','충치치료','미백','턱관절','사랑니발치','투명교정','라미네이트'];
+  var specCnt=seededRand(s*75,2,5),specs=[];
+  for(var j=0;j<specCnt;j++){var sp=specPool[seededRand(s*77+j*13,0,specPool.length-1)];if(specs.indexOf(sp)<0)specs.push(sp)}
+  var nightWeekend=seededRand(s*79,0,2);
+  var priceLvl=['저가','중간','고가'][seededRand(s*81,0,2)];
+  var threatLvl=chairs>=5&&yearsOpen>=5?'높음':chairs>=3?'보통':'낮음';
+  var sameTypeNearby=seededRand(s*83,0,4);
+  var forSale=seededRand(s*89,0,12)===0;
+  var estAcqPrice=forSale?Math.round(annRev*seededRand(s*91,8,18)/10):null;
+  return{name:it.n,type:it.c===41?'치과병원':'치과의원',
+    director:'',lat:it.y,lng:it.x,
+    address:it.a||'',phone:it.t||'',hospUrl:'',
+    estYear:estYear,rating:naverRating,chairs:chairs,
+    hasParking:seededRand(s*31,0,1)===1,floor:'',size:sz+'평',annualRevenue:annRev,
+    monthlyRevenue:monthlyRev,dailyPatients:dailyPat,dentistCount:drCnt,hygienistCount:hygienistCnt,
+    totalStaff:totalStaff,insuranceClaims:insClaims,nonCoverageRatio:nonCovRatio,
+    naverRating:naverRating,naverReviewCount:naverReviewCnt,blogExposure:blogExposure,
+    specialties:specs,nightWeekend:nightWeekend,priceLevel:priceLvl,yearsOpen:yearsOpen,
+    competitionThreat:threatLvl,sameTypeNearby:sameTypeNearby,
+    status:'영업중',forSale:forSale,estimatedAcquisitionPrice:estAcqPrice,
+    _real:true};
+}
+
+/* 실제 치과 데이터 fetch — 정적 JSON에서 반경 내 치과 필터링 */
+async function fetchRealClinics(lat,lng,radius){
+  var data=await loadClinicData();
+  if(!data)return null;
+  var r=radius||1000;
+  var nearby=[];
+  for(var i=0;i<data.clinics.length;i++){
+    var c=data.clinics[i];
+    var d=distM(lat,lng,c.y,c.x);
+    if(d<=r){c._dist=d;nearby.push(c)}
+  }
+  if(nearby.length===0)return null;
+  nearby.sort(function(a,b){return a._dist-b._dist});
+  /* 최대 50개 반환 */
+  if(nearby.length>50)nearby=nearby.slice(0,50);
+  console.log('[DentalMap] 반경',r+'m 내 실제 치과:',nearby.length,'개');
+  return nearby.map(function(it,idx){return expandClinic(it,idx)});
+}
+
 /* ── Region Generation ── */
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
 function seededRand(seed,min,max){seed=(seed*9301+49297)%233280;return min+Math.floor((seed/233280)*(max-min+1))}
+function distM(lat1,lng1,lat2,lng2){const dLat=(lat2-lat1)*111320;const dLng=(lng2-lng1)*111320*Math.cos((lat1+lat2)/2*Math.PI/180);return Math.sqrt(dLat*dLat+dLng*dLng)}
+
+/* ── Commercial Zone Anchors ── */
+const CZ={
+// 서울 25구
+'강남구':[37.4979,127.0276,37.5009,127.0396,37.5140,127.0590,37.5172,127.0391],
+'서초구':[37.4837,127.0073,37.4920,127.0104,37.5023,127.0252],
+'송파구':[37.5048,127.1119,37.5133,127.1001,37.5145,127.0850],
+'강동구':[37.5301,127.1238,37.5352,127.1320,37.5260,127.1270],
+'마포구':[37.5563,126.9237,37.5534,126.9098,37.5664,126.9018],
+'용산구':[37.5326,126.9906,37.5298,126.9648,37.5340,126.9720],
+'종로구':[37.5700,126.9830,37.5735,126.9790,37.5720,126.9920],
+'영등포구':[37.5264,126.8963,37.5175,126.9069,37.5228,126.9144],
+'강서구':[37.5510,126.8495,37.5592,126.8370,37.5470,126.8560],
+'구로구':[37.5033,126.8828,37.4954,126.8874,37.5081,126.8890],
+'관악구':[37.4784,126.9516,37.4815,126.9527,37.4840,126.9483],
+'동작구':[37.5083,126.9389,37.5124,126.9393,37.5048,126.9420],
+'성동구':[37.5445,127.0564,37.5634,127.0369,37.5475,127.0430],
+'광진구':[37.5385,127.0823,37.5348,127.0746,37.5420,127.0810],
+'동대문구':[37.5744,127.0396,37.5712,127.0470,37.5690,127.0380],
+'중랑구':[37.6063,127.0926,37.5987,127.0793,37.6020,127.0880],
+'성북구':[37.5894,127.0164,37.5929,127.0196,37.5860,127.0230],
+'강북구':[37.6397,127.0253,37.6340,127.0270,37.6365,127.0230],
+'도봉구':[37.6688,127.0471,37.6530,127.0432,37.6580,127.0475],
+'노원구':[37.6542,127.0568,37.6559,127.0625,37.6490,127.0540],
+'은평구':[37.6027,126.9291,37.6165,126.9224,37.6095,126.9315],
+'서대문구':[37.5791,126.9368,37.5598,126.9430,37.5720,126.9460],
+'양천구':[37.5170,126.8664,37.5166,126.8568,37.5208,126.8690],
+'금천구':[37.4569,126.8955,37.4530,126.9020,37.4600,126.8930],
+// 부산 13구
+'해운대구':[35.1631,129.1636,35.1594,129.1600,35.1715,129.1746],
+'부산진구':[35.1631,129.0533,35.1572,129.0588,35.1608,129.0621],
+'동래구':[35.2050,129.0858,35.1985,129.0805,35.2020,129.0920],
+'사상구':[35.1526,128.9912,35.1510,128.9830,35.1570,128.9950],
+'연제구':[35.1762,129.0801,35.1800,129.0770,35.1730,129.0830],
+'수영구':[35.1458,129.1133,35.1420,129.1100,35.1490,129.1180],
+'금정구':[35.2432,129.0913,35.2430,129.0850,35.2380,129.0920],
+'사하구':[35.1046,128.9747,35.1080,128.9710,35.1015,128.9780],
+// 대전 5구
+'대전_중구':[36.3275,127.4268,36.3310,127.4285,36.3240,127.4200,36.3285,127.4230],
+'대전_서구':[36.3515,127.3785,36.3490,127.3860,36.3605,127.3710,36.3548,127.3820],
+'대전_동구':[36.3326,127.4450,36.3290,127.4380,36.3350,127.4500],
+'유성구':[36.3540,127.3388,36.3622,127.3505,36.3575,127.3460],
+'대덕구':[36.3535,127.4258,36.3480,127.4200,36.3510,127.4310],
+// 인천 7구
+'인천_중구':[37.4738,126.6217,37.4760,126.6260,37.4710,126.6190],
+'남동구':[37.4488,126.7369,37.4460,126.7310,37.4520,126.7420],
+'부평구':[37.5076,126.7219,37.5049,126.7250,37.5100,126.7180],
+'연수구':[37.4101,126.6783,37.4065,126.6810,37.4130,126.6750],
+'인천_서구':[37.5451,126.6760,37.5410,126.6710,37.5480,126.6800],
+'미추홀구':[37.4421,126.6993,37.4390,126.7020,37.4450,126.6960],
+'계양구':[37.5372,126.7376,37.5340,126.7350,37.5400,126.7410],
+// 대구 7구
+'대구_중구':[35.8694,128.6064,35.8670,128.6100,35.8720,128.6030],
+'수성구':[35.8583,128.6315,35.8560,128.6350,35.8610,128.6280],
+'달서구':[35.8299,128.5327,35.8260,128.5370,35.8340,128.5290],
+'대구_북구':[35.8858,128.5828,35.8820,128.5860,35.8890,128.5800],
+'대구_동구':[35.8864,128.6355,35.8830,128.6390,35.8900,128.6320],
+'대구_서구':[35.8718,128.5592,35.8690,128.5620,35.8750,128.5560],
+'대구_남구':[35.8460,128.5975,35.8430,128.6010,35.8490,128.5940],
+// 광주 5구
+'광주_서구':[35.1522,126.8895,35.1490,126.8850,35.1550,126.8920],
+'광주_북구':[35.1744,126.9120,35.1710,126.9080,35.1770,126.9160],
+'광주_남구':[35.1326,126.9024,35.1300,126.9060,35.1360,126.8990],
+'광주_동구':[35.1461,126.9231,35.1430,126.9200,35.1490,126.9260],
+'광산구':[35.1395,126.7938,35.1360,126.7900,35.1430,126.7970],
+// 울산 5구
+'울산_남구':[35.5444,129.3303,35.5420,129.3260,35.5470,129.3340],
+'울산_중구':[35.5694,129.3327,35.5670,129.3370,35.5720,129.3290],
+'울산_동구':[35.5050,129.4166,35.5020,129.4130,35.5080,129.4200],
+'울산_북구':[35.5826,129.3610,35.5800,129.3580,35.5850,129.3640],
+'울주군':[35.5224,129.2441,35.5200,129.2480,35.5250,129.2400],
+// 수원 4구
+'영통구':[37.2596,127.0462,37.2554,127.0520,37.2640,127.0430],
+'팔달구':[37.2829,127.0204,37.2790,127.0250,37.2860,127.0170],
+'장안구':[37.3038,127.0101,37.3000,127.0140,37.3070,127.0060],
+'권선구':[37.2572,126.9719,37.2540,126.9760,37.2600,126.9680],
+// 성남 3구
+'분당구':[37.3825,127.1188,37.3780,127.1230,37.3870,127.1150],
+'수정구':[37.4504,127.1457,37.4470,127.1490,37.4540,127.1420],
+'중원구':[37.4317,127.1372,37.4280,127.1410,37.4350,127.1340],
+// 고양 3구
+'일산동구':[37.6586,126.7742,37.6550,126.7780,37.6620,126.7700],
+'일산서구':[37.6756,126.7513,37.6720,126.7550,37.6790,126.7480],
+'덕양구':[37.6376,126.8320,37.6340,126.8360,37.6410,126.8280],
+// 용인 3구
+'수지구':[37.3219,127.0981,37.3250,127.0940,37.3190,127.1020],
+'기흥구':[37.2802,127.1151,37.2770,127.1190,37.2840,127.1110],
+'처인구':[37.2342,127.2019,37.2310,127.2060,37.2370,127.1980],
+// 창원 5구
+'성산구':[35.1989,128.7119,35.1960,128.7090,35.2020,128.7150],
+'의창구':[35.2538,128.6389,35.2500,128.6420,35.2570,128.6350],
+'마산합포구':[35.1855,128.5683,35.1830,128.5720,35.1880,128.5650],
+'마산회원구':[35.2215,128.5813,35.2180,128.5850,35.2250,128.5780],
+'진해구':[35.1336,128.7107,35.1310,128.7070,35.1360,128.7140],
+// 청주 4구
+'흥덕구':[36.6373,127.4329,36.6340,127.4370,36.6400,127.4290],
+'서원구':[36.6093,127.4712,36.6060,127.4750,36.6120,127.4680],
+'상당구':[36.6539,127.4901,36.6500,127.4940,36.6570,127.4860],
+'청원구':[36.6952,127.4879,36.6920,127.4920,36.6980,127.4840],
+// 전주 2구
+'완산구':[35.8123,127.1365,35.8090,127.1400,35.8150,127.1330],
+'덕진구':[35.8423,127.1344,35.8390,127.1380,35.8450,127.1310],
+// 천안 2구
+'서북구':[36.8502,127.1435,36.8470,127.1470,36.8530,127.1400],
+'동남구':[36.7889,127.1652,36.7860,127.1690,36.7920,127.1620],
+// 안산 2구
+'상록구':[37.3004,126.8461,37.2970,126.8500,37.3040,126.8420],
+'단원구':[37.3184,126.7962,37.3150,126.8000,37.3220,126.7930],
+// 안양 2구
+'만안구':[37.3866,126.9327,37.3830,126.9360,37.3900,126.9300],
+'동안구':[37.3929,126.9517,37.3900,126.9550,37.3960,126.9480],
+// 제주
+'제주시':[33.5100,126.5219,33.5120,126.5170,33.5070,126.5260],
+'서귀포시':[33.2532,126.5597,33.2510,126.5630,33.2560,126.5560],
+// 포항 2구
+'포항_남구':[35.9987,129.3652,35.9960,129.3690,36.0010,129.3620],
+'포항_북구':[36.0441,129.3719,36.0410,129.3750,36.0470,129.3690],
+// 부산 추가 (중구,서구,북구,남구,강서구)
+'부산_중구':[35.1060,129.0325,35.1030,129.0360,35.1090,129.0290],
+'부산_서구':[35.0982,129.0244,35.0950,129.0280,35.1010,129.0210],
+'부산_북구':[35.1974,129.0312,35.1940,129.0350,35.2000,129.0280],
+'부산_남구':[35.1368,129.0845,35.1340,129.0880,35.1400,129.0810],
+'부산_강서구':[35.2121,128.9809,35.2090,128.9840,35.2150,128.9770],
+// 서울 중구
+'서울_중구':[37.5641,126.9979,37.5590,126.9860,37.5612,127.0030],
+// 주요 도시 (구 없음)
+'김해':[35.2341,128.8812,35.2285,128.8894,35.2310,128.8850],
+'평택':[36.9921,127.0866,36.9890,127.0900,36.9950,127.0830],
+'파주':[37.7599,126.7801,37.7570,126.7830,37.7630,126.7770],
+'시흥':[37.3800,126.8028,37.3770,126.8060,37.3830,126.8000],
+'화성':[37.1994,126.8313,37.1960,126.8350,37.2020,126.8280],
+'김포':[37.6152,126.7156,37.6120,126.7190,37.6180,126.7120],
+'광명':[37.4786,126.8645,37.4760,126.8680,37.4810,126.8610],
+'군포':[37.3614,126.9352,37.3580,126.9390,37.3650,126.9320],
+'하남':[37.5393,127.2147,37.5360,127.2180,37.5420,127.2110],
+'양산':[35.3350,129.0372,35.3320,129.0400,35.3380,129.0340],
+'구미':[36.1197,128.3440,36.1170,128.3480,36.1230,128.3400],
+'춘천':[37.8813,127.7300,37.8780,127.7340,37.8840,127.7260],
+'원주':[37.3423,127.9202,37.3390,127.9240,37.3450,127.9170],
+'강릉':[37.7519,128.8761,37.7490,128.8800,37.7550,128.8720],
+'여수':[34.7604,127.6622,34.7580,127.6660,34.7630,127.6590],
+'순천':[34.9506,127.4872,34.9480,127.4910,34.9530,127.4840],
+'목포':[34.8118,126.3922,34.8090,126.3960,34.8150,126.3890],
+'익산':[35.9483,126.9577,35.9450,126.9610,35.9510,126.9540],
+'군산':[35.9674,126.7369,35.9650,126.7400,35.9700,126.7340],
+'경주':[35.8562,129.2247,35.8530,129.2280,35.8590,129.2210],
+'거제':[34.8806,128.6213,34.8780,128.6250,34.8830,128.6180],
+'양주':[37.7854,127.0456,37.7820,127.0490,37.7880,127.0420],
+'의정부':[37.7381,127.0337,37.7350,127.0370,37.7410,127.0300],
+'남양주':[37.6360,127.2163,37.6330,127.2200,37.6390,127.2130],
+'이천':[37.2720,127.4348,37.2690,127.4380,37.2750,127.4310],
+'오산':[37.1498,127.0697,37.1470,127.0730,37.1530,127.0660],
+'충주':[36.9910,127.9259,36.9880,127.9290,36.9940,127.9220],
+'아산':[36.7899,127.0018,36.7870,127.0050,36.7930,126.9990],
+'서산':[36.7845,126.4503,36.7820,126.4540,36.7870,126.4470],
+'세종':[36.4801,126.9270,36.4770,126.9310,36.4830,126.9230],
+'홍대':[37.5563,126.9237,37.5540,126.9260,37.5580,126.9210],
+'잠실':[37.5133,127.1001,37.5110,127.1030,37.5160,127.0970],
+'강남':[37.4979,127.0276,37.5009,127.0396,37.5140,127.0590],
+'판교':[37.3947,127.1112,37.3920,127.1140,37.3970,127.1080],
+'광주시':[37.4095,127.2551,37.4070,127.2580,37.4120,127.2520]
+};
+function getCommercialAnchors(r){
+  const gu=r.sigungu||'';
+  const sc=(r.sido||'').replace(/특별시|광역시|특별자치시|특별자치도|도$/g,'');
+  const amb=['중구','서구','동구','남구','북구'];
+  let key=gu;
+  if(amb.includes(gu)) key=sc+'_'+gu;
+  let arr=CZ[key];
+  if(!arr){const g2=gu.replace(/^.+시\s*/,'');arr=CZ[g2]||CZ[gu]||CZ[sc]}
+  if(!arr||arr.length<2)return null;
+  const anchors=[];for(let i=0;i<arr.length;i+=2)anchors.push({lat:arr[i],lng:arr[i+1]});
+  return anchors;
+}
+
+/* ── 카카오 역지오코딩으로 공원 감지 → 상업건물 스냅 ── */
+async function ensureCommercialLocation(lat,lng){
+  if(typeof kakao==='undefined'||!kakao.maps)return{lat:lat,lng:lng,snapped:false};
+  return new Promise(function(resolve){
+    try{
+      kakao.maps.load(function(){
+        try{
+          var geocoder=new kakao.maps.services.Geocoder();
+          /* 1단계: 역지오코딩으로 도로명주소 존재 여부 확인 */
+          geocoder.coord2Address(lng,lat,function(result,status){
+            console.log('[DentalMap] 역지오코딩:',status,result&&result[0]?JSON.stringify({road:result[0].road_address?result[0].road_address.address_name:'없음',jibun:result[0].address?result[0].address.address_name:'없음'}):'결과없음');
+            var hasRoad=status===kakao.maps.services.Status.OK&&result&&result[0]&&result[0].road_address;
+            if(hasRoad){
+              console.log('[DentalMap] 도로명주소 있음 → 상업지 확인');
+              resolve({lat:lat,lng:lng,snapped:false});return}
+            /* 2단계: 도로명주소 없음 → 공원/녹지 가능성 → 가장 가까운 음식점으로 스냅 */
+            console.log('[DentalMap] 도로명주소 없음 → 상업건물 스냅 시도');
+            var ps=new kakao.maps.services.Places();
+            ps.categorySearch('FD6',function(data,st2){
+              if(st2===kakao.maps.services.Status.OK&&data.length){
+                console.log('[DentalMap] 스냅: '+data[0].place_name+' ('+data[0].y+','+data[0].x+')');
+                resolve({lat:parseFloat(data[0].y),lng:parseFloat(data[0].x),snapped:true,name:data[0].place_name});return}
+              /* 음식점 없으면 편의점 */
+              ps.categorySearch('CS2',function(data2,st3){
+                if(st3===kakao.maps.services.Status.OK&&data2.length){
+                  console.log('[DentalMap] 스냅(편의점): '+data2[0].place_name);
+                  resolve({lat:parseFloat(data2[0].y),lng:parseFloat(data2[0].x),snapped:true,name:data2[0].place_name});return}
+                console.log('[DentalMap] 스냅 실패 — 원본 좌표 유지');
+                resolve({lat:lat,lng:lng,snapped:false});
+              },{location:new kakao.maps.LatLng(lat,lng),radius:500,sort:kakao.maps.services.SortBy.DISTANCE});
+            },{location:new kakao.maps.LatLng(lat,lng),radius:500,sort:kakao.maps.services.SortBy.DISTANCE});
+          });
+        }catch(e){console.error('[DentalMap] ensureCommercial 오류:',e);resolve({lat:lat,lng:lng,snapped:false})}
+      });
+    }catch(e){resolve({lat:lat,lng:lng,snapped:false})}
+  });
+}
+/* ── 카카오 지오코딩 (키워드 검색) ── */
+async function kakaoGeocode(query){
+  if(typeof kakao==='undefined'){console.warn('[DentalMap] kakao SDK 미로드');return null}
+  if(!kakao.maps){console.warn('[DentalMap] kakao.maps 없음');return null}
+  return new Promise(function(resolve){
+    try{
+      kakao.maps.load(function(){
+        try{
+          var ps=new kakao.maps.services.Places();
+          ps.keywordSearch(query,function(data,status){
+            console.log('[DentalMap] 카카오 검색 상태:',status,'결과:',data?data.length:0);
+            if(status!==kakao.maps.services.Status.OK||!data.length){resolve(null);return}
+            var place=data[0];
+            var addr=place.address_name||'';
+            var parts=addr.split(' ');
+            resolve({lat:parseFloat(place.y),lng:parseFloat(place.x),sido:parts[0]||'',sigungu:parts[1]||'',placeName:place.place_name,address:addr});
+          });
+        }catch(e){console.error('[DentalMap] 카카오 검색 오류:',e);resolve(null)}
+      });
+    }catch(e){console.error('[DentalMap] kakao.maps.load 오류:',e);resolve(null)}
+  });
+}
+
 function resolveGeoFromName(name){
   const areas=[
-    {kw:['대전'],lat:36.3504,lng:126.3845,sido:'대전광역시',
+    {kw:['대전'],lat:36.3504,lng:127.3845,sido:'대전광역시',
       gu:[{kw:'중구',lat:36.3254,lng:127.4214},{kw:'서구',lat:36.3555,lng:127.3835},{kw:'동구',lat:36.3121,lng:127.4549},{kw:'유성구',lat:36.3622,lng:127.3561},{kw:'대덕구',lat:36.3467,lng:127.4153}]},
     {kw:['서울'],lat:37.5665,lng:126.978,sido:'서울특별시',
       gu:[{kw:'강남구',lat:37.5172,lng:127.0473},{kw:'서초구',lat:37.4837,lng:127.0324},{kw:'송파구',lat:37.5145,lng:127.1050},{kw:'강동구',lat:37.5301,lng:127.1238},{kw:'마포구',lat:37.5664,lng:126.9018},{kw:'용산구',lat:37.5326,lng:126.9906},{kw:'종로구',lat:37.5735,lng:126.9790},{kw:'중구',lat:37.5641,lng:126.9979},{kw:'영등포구',lat:37.5264,lng:126.8963},{kw:'강서구',lat:37.5510,lng:126.8495},{kw:'구로구',lat:37.4954,lng:126.8874},{kw:'관악구',lat:37.4784,lng:126.9516},{kw:'동작구',lat:37.5124,lng:126.9393},{kw:'성동구',lat:37.5634,lng:127.0369},{kw:'광진구',lat:37.5385,lng:127.0823},{kw:'동대문구',lat:37.5744,lng:127.0396},{kw:'중랑구',lat:37.6063,lng:127.0926},{kw:'성북구',lat:37.5894,lng:127.0164},{kw:'강북구',lat:37.6397,lng:127.0253},{kw:'도봉구',lat:37.6688,lng:127.0471},{kw:'노원구',lat:37.6542,lng:127.0568},{kw:'은평구',lat:37.6027,lng:126.9291},{kw:'서대문구',lat:37.5791,lng:126.9368},{kw:'양천구',lat:37.5170,lng:126.8664},{kw:'금천구',lat:37.4569,lng:126.8955}]},
@@ -186,9 +502,16 @@ function resolveGeoFromName(name){
   }
   return{lat:baseLat,lng:baseLng,sido:sido,sigungu:sigungu};
 }
-function generateRegion(name){
+async function generateRegion(name){
   const h=hashStr(name),r=n=>(a,b)=>seededRand(h*n+n,a,b);
-  const geo=resolveGeoFromName(name);
+  /* 1차: 카카오 지오코딩, 2차: 키워드 매칭 폴백 */
+  const kakaoResult=await kakaoGeocode(name).catch(function(){return null});
+  const fallback=resolveGeoFromName(name);
+  const geo=kakaoResult||fallback;
+  /* sido/sigungu가 비어있으면 fallback에서 보충 */
+  if(!geo.sido&&fallback.sido)geo.sido=fallback.sido;
+  if(!geo.sigungu&&fallback.sigungu)geo.sigungu=fallback.sigungu;
+  if(kakaoResult)console.log('[DentalMap] 카카오 지오코딩:',kakaoResult.placeName,'→',kakaoResult.lat,kakaoResult.lng);
   const pop=r(1)(15000,60000),dental=r(2)(3,18),rent=r(3)(6,22),area=r(4)(25,50),wk=r(5)(2,15),bus=r(6)(2,10),fl=r(7)(20000,100000);
   const gr=parseFloat(((r(8)(0,80)-20)/10).toFixed(1)),a20=r(9)(25,48),a40=r(10)(20,35),a60=Math.max(0,100-a20-a40);
   const ps=Math.min(100,Math.max(30,Math.round(pop/600)+r(11)(-5,5))),cs=Math.min(100,Math.max(20,100-dental*5+r(12)(-5,10)));
@@ -205,12 +528,13 @@ function generateRegion(name){
     ['역삼역','강남역','홍대입구역','신촌역','잠실역','건대입구역','사당역','왕십리역','을지로역','종각역','신림역','판교역','수원역','인천역'];
   const lns=geo.sido.includes('대전')?['1호선','대전1호선']:geo.sido.includes('부산')?['1호선','2호선','3호선','4호선','동해선']:geo.sido.includes('대구')?['1호선','2호선','3호선']:geo.sido.includes('광주')?['1호선']:['2호선','3호선','4호선','7호선','9호선','신분당선','경의중앙선','1호선','5호선','6호선'];
   const cg=['A','B','C'];
-  const jitter=0.002;
-  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true};
+  /* 카카오 결과일 때 jitter 없음 (정확한 좌표 유지) */
+  const jitter=kakaoResult?0:0.002;
+  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true,_kakaoGeo:!!kakaoResult};
 }
-function addGeneratedRegion(name){
+async function addGeneratedRegion(name){
   const ex=REGIONS.find(r=>r.dong===name&&r._generated);if(ex)return ex;
-  const r=generateRegion(name);REGIONS.push(r);return r;
+  const r=await generateRegion(name);REGIONS.push(r);return r;
 }
 
 /* ── Leaflet Map ── */
@@ -218,7 +542,7 @@ let analysisMap=null;
 function addMapLegend(map,type){
   const legend=L.control({position:'bottomright'});
   legend.onAdd=function(){
-    const div=L.DomUtil.create('div','map-legend collapsed');
+    const div=L.DomUtil.create('div','map-legend');
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
     let h='<h4 onclick="this.parentElement.classList.toggle(\'collapsed\')"><span>범례</span><span class="leg-arrow">▼</span></h4><div class="leg-body">';
@@ -276,7 +600,10 @@ function clinicForSaleBadge(c){
 function nightWeekendLabel(nw){return nw===2?'야간+주말':nw===1?'주말진료':'평일만'}
 function buildClinicPopup(c){
   const r='<div style="min-width:260px;max-width:300px;font-family:Pretendard Variable,sans-serif;font-size:12px">'
+    +(c._real?'<div style="background:#ecfdf5;color:#065f46;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;display:inline-block;margin-bottom:4px">실제 데이터</div>':'')
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="font-size:14px;color:#1d4ed8">'+c.name+'</b><div>'+clinicStatusBadge(c)+clinicForSaleBadge(c)+'</div></div>'
+    +(c.address?'<div style="font-size:11px;color:#6b7280;margin-bottom:4px">'+c.address+'</div>':'')
+    +(c.phone?'<div style="font-size:11px;color:#6b7280;margin-bottom:4px"><a href="tel:'+c.phone+'" style="color:#2563eb;text-decoration:none">'+c.phone+'</a></div>':'')
     +'<div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:3px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">'+c.type+'</span>'
     +'<span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-size:11px">'+c.priceLevel+'</span>'
     +'<span style="background:#f3e8ff;color:#7c3aed;padding:1px 6px;border-radius:4px;font-size:11px">'+nightWeekendLabel(c.nightWeekend)+'</span></div>'
@@ -303,6 +630,7 @@ function buildClinicPopup(c){
 }
 function generateNearbyClinics(r){
   const h=hashStr(r.dong_code||r.dong),cnt=r.dental_count||8,clinics=[];
+  const anchors=getCommercialAnchors(r);
   const types=['일반치과','교정치과','소아치과','임플란트치과','심미치과','통합치과'];
   const pfx=['서울','미소','해피','스마일','연세','이든','푸른','맑은','새봄','하나','온','빛','늘','좋은','밝은','참'];
   const dirs=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황'];
@@ -332,8 +660,11 @@ function generateNearbyClinics(r){
     const status=statusRand>=2?'영업중':statusRand===1?'휴업':'폐업';
     const forSale=status==='폐업'?true:status==='휴업'?seededRand(s*87,0,1)===1:seededRand(s*89,0,8)===0;
     const estAcqPrice=forSale?Math.round(annRev*seededRand(s*91,8,18)/10):null;
+    let cLat,cLng;
+    if(anchors){const anc=anchors[seededRand(s*2,0,anchors.length-1)];cLat=anc.lat+seededRand(s*3,-15,15)/10000;cLng=anc.lng+seededRand(s*7,-18,18)/10000}
+    else{cLat=r.lat+seededRand(s*3,-20,20)/10000;cLng=r.lng+seededRand(s*7,-25,25)/10000}
     clinics.push({name:pfx[seededRand(s*11,0,pfx.length-1)]+'치과의원',type:types[seededRand(s*13,0,types.length-1)],
-      director:dirs[seededRand(s*17,0,dirs.length-1)]+'원장',lat:r.lat+(seededRand(s*3,-70,70))/10000,lng:r.lng+(seededRand(s*7,-70,70))/10000,
+      director:dirs[seededRand(s*17,0,dirs.length-1)]+'원장',lat:cLat,lng:cLng,
       estYear:ey,rating:(seededRand(s*23,32,50)/10).toFixed(1),chairs:chairs,
       hasParking:seededRand(s*31,0,1)===1,floor:seededRand(s*37,1,8)+'층',size:sz+'평',annualRevenue:annRev,
       monthlyRevenue:monthlyRev,dailyPatients:dailyPat,dentistCount:dentistCnt,hygienistCount:hygienistCnt,
@@ -344,34 +675,135 @@ function generateNearbyClinics(r){
       status:status,forSale:forSale,estimatedAcquisitionPrice:estAcqPrice})}
   return clinics;
 }
-function generateRecommendedSpots(r){
+function generateRecommendedSpots(r,clinics){
   const h=hashStr(r.dong+'_rec'),spots=[];
-  const reasons=[['경쟁 공백 지역 — 반경 300m 내 치과 없음','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴','주차장 확보 용이']];
-  for(let i=0;i<2;i++){const s=h*50+i,angle=(seededRand(s,0,360)*Math.PI)/180,dist=seededRand(s*3,40,70)/10000;
-    spots.push({lat:r.lat+Math.cos(angle)*dist,lng:r.lng+Math.sin(angle)*dist,
+  var active=clinics?clinics.filter(function(c){return c.status==='영업중'}):[];
+  if(active.length<2){/* 치과 2개 미만이면 상권 앵커 기반 폴백 */
+    var anc=getCommercialAnchors(r),s0=h*50;
+    for(var fi=0;fi<2;fi++){var sl=anc&&anc[fi%anc.length]?anc[fi%anc.length]:{lat:r.lat,lng:r.lng};
+      spots.push({lat:sl.lat+seededRand(s0+fi,-6,6)/10000,lng:sl.lng+seededRand(s0+fi*3,-8,8)/10000,
+        label:fi===0?'추천 위치 A (최적)':'추천 위치 B (대안)',score:Math.min(98,r.scores.total+seededRand(s0*7+fi,8,20)-fi*5),grade:fi===0?'S':'A',
+        reasons:['경쟁 치과가 거의 없는 블루오션 지역','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내'],
+        nearestClinicM:0,rent:Math.max(5,r.avg_rent_pyeong-seededRand(s0*9+fi,1,4)),estPop:seededRand(s0*11+fi,8000,25000)})}
+    return spots}
+  /* ── Step 1: 클러스터 중심 계산 ── */
+  var cLat=0,cLng=0;active.forEach(function(c){cLat+=c.lat;cLng+=c.lng});
+  cLat/=active.length;cLng/=active.length;
+  /* ── Step 2: 각 치과의 경쟁 압력 계산 → 경쟁 가장 적은 치과 = 최적 추천 위치 ── */
+  /* 핵심 원리: 실제 치과 좌표를 그대로 사용 → 공원/하천 착지 원천 불가 */
+  active.forEach(function(cl){
+    var minD=Infinity,pressure=0,cnt400=0;
+    active.forEach(function(other){
+      if(cl===other)return;
+      var d=distM(cl.lat,cl.lng,other.lat,other.lng);
+      if(d<minD)minD=d;
+      if(d>0&&d<500)pressure+=1/(d*d);
+      if(d<=400)cnt400++;
+    });
+    cl._nearDist=minD===Infinity?9999:minD;
+    cl._pressure=pressure;
+    cl._density=cnt400;
+  });
+  /* 경쟁 압력 낮은 순 정렬 (= 틈새 큰 치과) */
+  var sorted=active.slice().sort(function(a,b){return a._pressure-b._pressure});
+  /* ── Step 3: 상위 2개 선택 (서로 200m+ 이격) ── */
+  var picked=[];
+  for(var ci=0;ci<sorted.length&&picked.length<2;ci++){
+    if(sorted[ci]._nearDist<80)continue;/* 바로 옆에 치과 있으면 제외 */
+    var ok=true;
+    for(var pi=0;pi<picked.length;pi++){
+      if(distM(sorted[ci].lat,sorted[ci].lng,picked[pi].lat,picked[pi].lng)<200){ok=false;break}
+    }
+    if(ok){
+      /* 실제 치과 좌표를 그대로 사용 (오프셋 없음 → 공원 착지 원천 불가) */
+      console.log('[DentalMap] 추천'+picked.length+': '+sorted[ci].name+' ('+sorted[ci].lat+','+sorted[ci].lng+') 경쟁압력='+sorted[ci]._pressure.toFixed(8)+' 최근접='+sorted[ci]._nearDist+'m');
+      picked.push({lat:sorted[ci].lat,lng:sorted[ci].lng,
+        nearDist:sorted[ci]._nearDist,density:sorted[ci]._density,
+        clinicName:sorted[ci].name});
+    }
+  }
+  /* ── Step 5: 주변 치과 평균으로 사업 지표 기준 산출 ── */
+  var avgChairs=0,avgRev=0,avgDaily=0,avgSize=0,acN=active.length||1;
+  active.forEach(function(c){avgChairs+=c.chairs;avgRev+=c.annualRevenue;avgDaily+=c.dailyPatients;avgSize+=parseInt(c.size)||30});
+  avgChairs=Math.round(avgChairs/acN);avgRev=Math.round(avgRev/acN);avgDaily=Math.round(avgDaily/acN);avgSize=Math.round(avgSize/acN);
+  /* ── Step 6: 추천 지점 데이터 + 사업계획 지표 생성 ── */
+  var baseReasons=[['유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],
+    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴']];
+  for(var i=0;i<picked.length;i++){var s=h*50+i,p=picked[i];
+    var gapM=Math.round(p.nearDist);
+    var rs=['주변 '+p.density+'개 치과 밀집 상권 내 틈새 (가장 가까운 치과 '+gapM+'m)'];
+    rs=rs.concat(baseReasons[i]||baseReasons[0]);
+    /* 사업 지표 산출 — 주변 치과 평균 + 틈새 보정 */
+    var gapBonus=gapM>200?1.15:gapM>120?1.08:1.0;/* 틈새 클수록 환자 유입 보너스 */
+    var recChairs=Math.max(3,Math.min(7,avgChairs+seededRand(s*31,-1,1)));
+    var recSize=Math.max(20,Math.min(55,Math.round(recChairs*7+seededRand(s*33,-3,5))));
+    var rentPy=Math.max(5,r.avg_rent_pyeong+seededRand(s*35,-2,1));
+    var monthlyRent=rentPy*recSize;
+    var estDailyPat=Math.max(8,Math.round(avgDaily*gapBonus+seededRand(s*37,-3,5)));
+    var estAnnRev=Math.round((recChairs*7000+recSize*120+seededRand(s*39,-2000,5000))*gapBonus);
+    var estMonthRev=Math.round(estAnnRev/12);
+    var recDentist=Math.max(1,Math.round(recChairs/2.5));
+    var recHygienist=Math.max(1,Math.round(recChairs*0.8));
+    var recStaff=recDentist+recHygienist+Math.max(1,Math.round(recChairs*0.4));
+    var initInvest=Math.round(recChairs*4500+recSize*180+seededRand(s*41,2000,8000));/* 체어당 4500만+인테리어+장비 */
+    var monthlyProfit=estMonthRev-monthlyRent-Math.round(recStaff*350+recChairs*120);
+    var breakEvenMo=monthlyProfit>0?Math.max(6,Math.min(36,Math.round(initInvest/monthlyProfit))):36;
+    spots.push({lat:p.lat,lng:p.lng,
       label:i===0?'추천 위치 A (최적)':'추천 위치 B (대안)',
       score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*5),
-      grade:i===0?'S':'A',reasons:reasons[i],
-      rent:Math.max(5,r.avg_rent_pyeong-seededRand(s*9,1,4)),estPop:seededRand(s*11,8000,25000)})}
+      grade:i===0?'S':'A',reasons:rs,
+      nearestClinicM:gapM,surroundingClinics:p.density,
+      rent:rentPy,estPop:seededRand(s*11,8000,25000),
+      /* 사업계획 지표 */
+      recSize:recSize,recChairs:recChairs,monthlyRent:monthlyRent,
+      estDailyPat:estDailyPat,estMonthRev:estMonthRev,estAnnRev:estAnnRev,
+      recDentist:recDentist,recHygienist:recHygienist,recStaff:recStaff,
+      initInvest:initInvest,monthlyProfit:monthlyProfit,breakEvenMo:breakEvenMo})}
   return spots;
 }
-function renderAnalysisMap(r){
+async function renderAnalysisMap(r){
   if(analysisMap){analysisMap.remove();analysisMap=null}
   const el=document.getElementById('analysis-map');if(!el||typeof L==='undefined')return;
   analysisMap=L.map('analysis-map',{scrollWheelZoom:true,zoomControl:true}).setView([r.lat,r.lng],15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18}).addTo(analysisMap);
   addMapLegend(analysisMap,'analysis');
+  /* 지오코딩 소스 표시 */
+  var geoSrc=L.control({position:'topleft'});geoSrc.onAdd=function(){var d=L.DomUtil.create('div','');d.innerHTML='<div style="background:'+(r._kakaoGeo?'#ecfdf5;border:1px solid #6ee7b7;color:#065f46':'#fef9c3;border:1px solid #fde68a;color:#92400e')+';border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.1)">'+(r._kakaoGeo?'카카오 지오코딩':'키워드 매칭 (폴백)')+'</div>';return d};geoSrc.addTo(analysisMap);
   /* center */
   L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div style="background:#3b82f6;color:white;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,0.5)">📍</div>',iconSize:[40,40],iconAnchor:[20,20]})}).addTo(analysisMap)
     .bindPopup('<div style="min-width:160px;font-family:Pretendard Variable,sans-serif"><b style="font-size:15px">'+r.dong+'</b><br><span style="color:#6b7280;font-size:12px">분석 중심 지역</span><br><span style="color:#3b82f6;font-weight:bold;font-size:18px">종합 '+r.scores.total+'점</span> <span style="font-size:12px;color:#6b7280">'+r.grade+'등급</span></div>');
-  /* clinics */
-  const clinics=generateNearbyClinics(r);
+  /* clinics — 실제 API 우선, 실패 시 mock 폴백 */
+  var clinics=await fetchRealClinics(r.lat,r.lng,1000);
+  var isRealData=!!clinics;
+  if(!clinics)clinics=generateNearbyClinics(r);
+  /* 데이터 소스 표시 */
+  if(isRealData){var srcDiv=L.control({position:'topright'});srcDiv.onAdd=function(){var d=L.DomUtil.create('div','');d.innerHTML='<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#065f46;box-shadow:0 1px 4px rgba(0,0,0,0.1)">실제 치과 데이터 (HIRA)</div>';return d};srcDiv.addTo(analysisMap)}
   clinics.forEach(c=>{L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+(c.status==='영업중'?'#ef4444':c.status==='휴업'?'#eab308':'#9ca3af')+';color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.25);cursor:pointer">🦷</div>',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(analysisMap)
     .bindPopup(buildClinicPopup(c),{maxWidth:320})});
-  /* recommended */
-  const spots=generateRecommendedSpots(r);
-  spots.forEach(s=>{L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="position:relative"><div style="position:absolute;inset:-6px;background:rgba(245,158,11,0.2);border-radius:50%;animation:marker-pulse 2s infinite"></div><div style="position:relative;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 10px rgba(245,158,11,0.5)">⭐</div></div>',iconSize:[38,38],iconAnchor:[19,19]})}).addTo(analysisMap)
-    .bindPopup('<div style="min-width:220px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴탈맵 추천</div><div style="font-size:15px;font-weight:bold;margin-top:6px">'+s.label+'</div><div style="display:flex;align-items:baseline;gap:6px;margin:4px 0"><span style="font-size:28px;font-weight:bold;color:#3b82f6">'+s.score+'점</span><span style="font-size:12px;background:#dbeafe;color:#2563eb;padding:1px 6px;border-radius:4px;font-weight:bold">'+s.grade+'등급</span></div><div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:2px">'+s.reasons.map(x=>'<div style="padding:2px 0">✅ '+x+'</div>').join('')+'</div><div style="margin-top:6px;font-size:11px;color:#6b7280">예상 임대료 '+s.rent+'만/평 · 주변 인구 '+fmt(s.estPop)+'명</div></div>')});
+  /* recommended — 반경 50m 추천 구역 원으로 표시 */
+  const spots=generateRecommendedSpots(r,clinics);
+  var spotColors=['#f59e0b','#8b5cf6'];/* A=주황, B=보라 */
+  spots.forEach(function(s,si){
+    var clr=spotColors[si]||spotColors[0];
+    /* 반경 50m 원 */
+    L.circle([s.lat,s.lng],{radius:50,color:clr,weight:2.5,opacity:0.85,fillColor:clr,fillOpacity:0.15,dashArray:'6 4'}).addTo(analysisMap);
+    /* 원 중심 라벨 */
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+clr+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);text-align:center;line-height:1.3">⭐ '+(si===0?'추천 A':'추천 B')+'<br><span style="font-size:9px;opacity:0.9">반경 50m</span></div>',iconSize:[0,0],iconAnchor:[40,15]})}).addTo(analysisMap)
+    .bindPopup('<div style="min-width:260px;max-width:340px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴탈맵 추천</div><div style="font-size:15px;font-weight:bold;margin-top:6px">'+s.label+'</div><div style="display:flex;align-items:baseline;gap:6px;margin:4px 0"><span style="font-size:28px;font-weight:bold;color:#3b82f6">'+s.score+'점</span><span style="font-size:12px;background:#dbeafe;color:#2563eb;padding:1px 6px;border-radius:4px;font-weight:bold">'+s.grade+'등급</span></div>'
+    +'<div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:2px">'+s.reasons.map(function(x){return'<div style="padding:2px 0">✅ '+x+'</div>'}).join('')+'</div>'
+    +'<div style="margin-top:8px;padding:8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0">'
+    +'<div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">추천 개원 규모</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:11px;color:#374151">'
+    +'<span>면적 <b>'+s.recSize+'평</b></span><span>체어 <b>'+s.recChairs+'대</b></span>'
+    +'<span>의사 <b>'+s.recDentist+'명</b></span><span>위생사 <b>'+s.recHygienist+'명</b></span>'
+    +'<span>직원(총) <b>'+s.recStaff+'명</b></span><span>월임대 <b>'+fmt(s.monthlyRent)+'만</b></span></div></div>'
+    +'<div style="margin-top:6px;padding:8px;background:#eff6ff;border-radius:6px;border:1px solid #bfdbfe">'
+    +'<div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:4px">예상 수익</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:11px;color:#374151">'
+    +'<span>일환자 <b>'+s.estDailyPat+'명</b></span><span>월매출 <b>'+fmtRevKr(s.estMonthRev)+'</b></span>'
+    +'<span>연매출 <b>'+fmtRevKr(s.estAnnRev)+'</b></span><span>월순이익 <b>'+fmtRevKr(s.monthlyProfit)+'</b></span>'
+    +'<span>초기투자 <b>약 '+fmtRevKr(s.initInvest)+'</b></span><span>손익분기 <b>약 '+s.breakEvenMo+'개월</b></span></div></div></div>',{maxWidth:360});
+  });
   /* fit bounds */
   const pts=[[r.lat,r.lng],...clinics.map(c=>[c.lat,c.lng]),...spots.map(s=>[s.lat,s.lng])];
   if(pts.length>1)analysisMap.fitBounds(pts,{padding:[40,40]});
@@ -380,11 +812,42 @@ function renderAnalysisMap(r){
 function renderClinicList(r,clinics,spots){
   const el=document.getElementById('clinic-list-container');if(!el)return;
   let h='<div class="grid md:grid-cols-2 gap-4 mt-4">';
-  spots.forEach(s=>{h+='<div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl p-5"><div class="flex items-center gap-2 mb-3"><span class="text-lg">⭐</span><span class="text-xs font-bold text-amber-800 bg-amber-200 px-2.5 py-0.5 rounded-full">덴탈맵 추천</span><span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-auto">'+s.grade+'등급</span></div><h3 class="font-bold text-base">'+s.label+'</h3><p class="text-3xl font-bold text-blue-600 mt-1">'+s.score+'<span class="text-base text-gray-400 font-medium">점</span></p><ul class="mt-3 space-y-1.5">'+s.reasons.map(x=>'<li class="text-sm text-gray-700 flex items-start gap-1.5"><span class="text-green-500 mt-0.5 shrink-0">✓</span>'+x+'</li>').join('')+'</ul><div class="mt-3 pt-3 border-t border-amber-200 flex gap-4 text-xs text-gray-500"><span>임대료 '+s.rent+'만/평</span><span>주변인구 '+fmt(s.estPop)+'명</span></div></div>'});
+  spots.forEach(s=>{h+='<div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl p-5">'
+    +'<div class="flex items-center gap-2 mb-3"><span class="text-lg">⭐</span><span class="text-xs font-bold text-amber-800 bg-amber-200 px-2.5 py-0.5 rounded-full">덴탈맵 추천</span><span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-auto">'+s.grade+'등급</span></div>'
+    +'<h3 class="font-bold text-base">'+s.label+'</h3>'
+    +'<p class="text-3xl font-bold text-blue-600 mt-1">'+s.score+'<span class="text-base text-gray-400 font-medium">점</span></p>'
+    +'<ul class="mt-3 space-y-1.5">'+s.reasons.map(x=>'<li class="text-sm text-gray-700 flex items-start gap-1.5"><span class="text-green-500 mt-0.5 shrink-0">✓</span>'+x+'</li>').join('')+'</ul>'
+    /* 추천 개원 규모 */
+    +'<div class="mt-3 pt-3 border-t border-amber-200">'
+    +'<p class="text-xs font-bold text-emerald-800 mb-2">추천 개원 규모</p>'
+    +'<div class="grid grid-cols-3 gap-x-3 gap-y-1 text-[11px]">'
+    +'<span class="text-gray-500">면적 <b class="text-gray-700">'+s.recSize+'평</b></span>'
+    +'<span class="text-gray-500">체어 <b class="text-gray-700">'+s.recChairs+'대</b></span>'
+    +'<span class="text-gray-500">월임대 <b class="text-gray-700">'+fmt(s.monthlyRent)+'만</b></span>'
+    +'<span class="text-gray-500">의사 <b class="text-gray-700">'+s.recDentist+'명</b></span>'
+    +'<span class="text-gray-500">위생사 <b class="text-gray-700">'+s.recHygienist+'명</b></span>'
+    +'<span class="text-gray-500">직원(총) <b class="text-gray-700">'+s.recStaff+'명</b></span>'
+    +'</div></div>'
+    /* 예상 수익 */
+    +'<div class="mt-2.5 pt-2.5 border-t border-amber-200">'
+    +'<p class="text-xs font-bold text-blue-800 mb-2">예상 수익</p>'
+    +'<div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">'
+    +'<span class="text-gray-500">일평균 환자 <b class="text-emerald-700">'+s.estDailyPat+'명</b></span>'
+    +'<span class="text-gray-500">월매출 <b class="text-emerald-700">'+fmtRevKr(s.estMonthRev)+'</b></span>'
+    +'<span class="text-gray-500">연매출 <b class="text-emerald-700">'+fmtRevKr(s.estAnnRev)+'</b></span>'
+    +'<span class="text-gray-500">월순이익 <b class="text-emerald-700">'+fmtRevKr(s.monthlyProfit)+'</b></span>'
+    +'</div></div>'
+    /* 투자·손익분기 */
+    +'<div class="mt-2.5 pt-2.5 border-t border-amber-200 flex items-center justify-between text-[11px]">'
+    +'<span class="text-gray-500">초기투자 <b class="text-violet-700">약 '+fmtRevKr(s.initInvest)+'</b></span>'
+    +'<span class="text-gray-500">손익분기 <b class="text-violet-700">약 '+s.breakEvenMo+'개월</b></span>'
+    +'</div>'
+    +'</div>'});
   h+='</div>';
   const activeCount=clinics.filter(c=>c.status==='영업중').length;
   const forSaleCount=clinics.filter(c=>c.forSale).length;
-  h+='<div class="mt-6"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm text-gray-700">주변 기존 치과 현황 ('+clinics.length+'개'+(forSaleCount>0?' · <span class="text-purple-600">인수가능 '+forSaleCount+'</span>':'')+')</h3><span class="text-xs text-gray-400">영업중 '+activeCount+'개 · 반경 약 500m</span></div>';
+  var realCount=clinics.filter(function(c){return c._real}).length;
+  h+='<div class="mt-6"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm text-gray-700">주변 기존 치과 현황 ('+clinics.length+'개'+(forSaleCount>0?' · <span class="text-purple-600">인수가능 '+forSaleCount+'</span>':'')+')</h3><span class="text-xs text-gray-400">'+(realCount>0?'<span class="text-emerald-600 font-semibold">HIRA 실제 데이터</span> · ':'')+'영업중 '+activeCount+'개 · 반경 약 '+(realCount>0?'1km':'500m')+'</span></div>';
   h+='<div class="clinic-list-scroll space-y-2">';
   clinics.forEach((c,i)=>{
     const stBadge=c.status==='영업중'?'<span class="text-[10px] font-medium bg-green-100 text-green-700 px-1 py-0.5 rounded">영업중</span>':c.status==='휴업'?'<span class="text-[10px] font-medium bg-yellow-100 text-yellow-700 px-1 py-0.5 rounded">휴업</span>':'<span class="text-[10px] font-medium bg-red-100 text-red-700 px-1 py-0.5 rounded">폐업</span>';
@@ -394,8 +857,8 @@ function renderClinicList(r,clinics,spots){
     +'<div class="flex items-center gap-3">'
     +'<div class="w-10 h-10 '+(c.status==='영업중'?'bg-red-100':'bg-gray-200')+' rounded-full flex items-center justify-center text-lg shrink-0">🦷</div>'
     +'<div class="flex-1 min-w-0">'
-    +'<div class="flex items-center gap-1"><p class="font-semibold text-sm truncate">'+c.name+'</p>'+stBadge+saleBadge+'</div>'
-    +'<p class="text-xs text-gray-500 mt-0.5">'+c.type+' · '+c.director+' · '+c.estYear+'년 ('+c.yearsOpen+'년차)</p>'
+    +'<div class="flex items-center gap-1"><p class="font-semibold text-sm truncate">'+c.name+'</p>'+stBadge+saleBadge+(c._real?'<span class="text-[10px] font-medium bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded ml-0.5">실제</span>':'')+'</div>'
+    +'<p class="text-xs text-gray-500 mt-0.5">'+(c._real&&c.address?c.address:c.type+' · '+c.director+' · '+c.estYear+'년 ('+c.yearsOpen+'년차)')+'</p>'
     +'</div>'
     +'<div class="text-right shrink-0"><p class="text-sm font-bold text-emerald-600">'+fmtRevKr(c.annualRevenue)+'원/년</p><p class="text-[10px] text-gray-400">월 '+fmtRevKr(c.monthlyRevenue)+'원</p></div></div>'
     +'<div class="mt-2 ml-[52px] grid grid-cols-3 gap-x-3 gap-y-0.5 text-[11px]">'
@@ -435,7 +898,13 @@ let analysisState={tab:'overview',generating:false,generated:false};
 /* ── Navigate to another region (stays on analysis.html) ── */
 function analyzeFromInput(){
   const v=(document.getElementById('analysis-quick-input').value||'').trim();if(!v)return;
-  window.location.href='analysis.html?q='+encodeURIComponent(v);
+  var url='analysis0.html?q='+encodeURIComponent(v);
+  var pp=new URLSearchParams(window.location.search);
+  if(pp.get('cname'))url+='&cname='+encodeURIComponent(pp.get('cname'));
+  if(pp.get('cphone'))url+='&cphone='+encodeURIComponent(pp.get('cphone'));
+  if(pp.get('cemail'))url+='&cemail='+encodeURIComponent(pp.get('cemail'));
+  if(pp.get('cinfo'))url+='&cinfo='+encodeURIComponent(pp.get('cinfo'));
+  window.location.href=url;
 }
 function analyzeFromHero(){
   const v=(document.getElementById('hero-search-input').value||'').trim();if(!v)return;
@@ -448,7 +917,7 @@ function analyzeFromHero(){
   if(cp)url+='&cphone='+encodeURIComponent(cp);
   if(ce)url+='&cemail='+encodeURIComponent(ce);
   if(ci)url+='&cinfo='+encodeURIComponent(ci);
-  window.open(url,'_blank');
+  window.location.href=url;
 }
 
 /* ── Tab Switch ── */
@@ -484,13 +953,13 @@ function renderAnalysisContent(r){
   hero+='<h1 class="text-3xl md:text-4xl font-bold mt-1">'+r.dong+' 입지 분석</h1>';
   hero+='<div class="flex items-center gap-3 mt-3">';
   hero+='<div class="px-4 py-2 rounded-xl text-lg font-bold '+getGradeColor(r.grade)+'">종합 '+r.scores.total+'점 &middot; '+r.grade+'등급</div>';
-  var rptUrl="report.html?q="+encodeURIComponent(r.dong);
+  var rptUrl="report0.html?q="+encodeURIComponent(r.dong);
   var pp=new URLSearchParams(window.location.search);
   if(pp.get("cname"))rptUrl+="&cname="+encodeURIComponent(pp.get("cname"));
   if(pp.get("cphone"))rptUrl+="&cphone="+encodeURIComponent(pp.get("cphone"));
   if(pp.get("cemail"))rptUrl+="&cemail="+encodeURIComponent(pp.get("cemail"));
   if(pp.get("cinfo"))rptUrl+="&cinfo="+encodeURIComponent(pp.get("cinfo"));
-  hero+='<a href="'+rptUrl+'" target="_blank" onclick="saveReportToStorage(analysisState.currentRegion)" class="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 flex items-center gap-2 no-underline"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>분석 리포트 만들기</a>';
+  hero+='<a href="'+rptUrl+'" target="_blank" class="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 flex items-center gap-2 no-underline"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>분석 리포트 만들기</a>';
   hero+='</div>';
   hero+='</div>';
   hero+='<div class="flex flex-col items-end gap-2">';
@@ -502,7 +971,7 @@ function renderAnalysisContent(r){
   /* Main content area */
   let main='<div class="max-w-6xl mx-auto px-6 py-8">';
   /* Map */
-  main+='<div class="mb-8"><div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div id="analysis-map" style="height:450px;z-index:0"></div><div class="px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50 text-right">지도 우측 하단의 <b>범례</b>에서 마커·배지 설명을 확인하세요</div></div><div id="clinic-list-container" class="mt-4"></div></div>';
+  main+='<div class="mb-8"><div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div id="analysis-map" style="aspect-ratio:1/1;width:100%;z-index:0"></div><div class="px-4 py-2 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50 text-right">지도 우측 하단의 <b>범례</b>에서 마커·배지 설명을 확인하세요</div></div><div id="clinic-list-container" class="mt-4"></div></div>';
   /* Tabs */
   main+='<div class="border-b border-gray-200 mb-8"><div class="flex gap-1"><button onclick="switchTab(\'overview\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='overview'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">종합 분석</button><button onclick="switchTab(\'investment\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='investment'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">투자 시뮬레이터</button><button onclick="switchTab(\'report\',\''+r.dong_code+'\')" class="px-5 py-3 text-sm font-semibold border-b-2 transition '+(tab==='report'?'border-blue-600 text-blue-600':'border-transparent text-gray-500')+'">AI 입지분석 리포트</button></div></div>';
   main+=tc;
@@ -556,40 +1025,30 @@ function showSearchForm(){
   setTimeout(()=>{const inp=document.getElementById('hero-search-input');if(inp)inp.focus()},200);
 }
 
-/* ── Save report to localStorage ── */
-function saveReportToStorage(r){
-  if(!r)return;
-  try{
-    var saved=JSON.parse(localStorage.getItem('dentmap_reports')||'[]');
-    var exists=saved.find(function(s){return s.dong===r.dong&&s.sigungu===r.sigungu});
-    if(exists){exists.timestamp=new Date().toISOString();exists.scores=r.scores;exists.grade=r.grade;}
-    else{saved.unshift({dong:r.dong,sido:r.sido,sigungu:r.sigungu,scores:r.scores,grade:r.grade,timestamp:new Date().toISOString()});}
-    localStorage.setItem('dentmap_reports',JSON.stringify(saved));
-  }catch(e){}
-}
-
 /* ── Init on DOMContentLoaded ── */
 document.addEventListener('DOMContentLoaded',function(){
   const params=new URLSearchParams(window.location.search);
   const q=params.get('q');
   if(!q||!q.trim()){
-    showSearchForm();
+    window.location.href='analysis.html';
     return;
   }
   const name=q.trim();
-  /* Try to find in existing REGIONS by dong, sigungu, or sido */
-  let r=REGIONS.find(x=>x.dong===name||x.dong.includes(name));
-  if(!r){
-    r=REGIONS.find(x=>x.sigungu.includes(name)||x.sido.includes(name));
-  }
-  if(!r){
-    /* Generate a new region */
-    r=addGeneratedRegion(name);
-  }
-  /* Update page title */
-  document.title=r.dong+' 입지 분석 — 덴탈맵AI 치과개원 입지분석';
-  analysisState={tab:'overview',generating:false,generated:false,currentRegion:r};
-  renderAnalysisContent(r);
+  (async function(){
+    /* Try to find in existing REGIONS by dong, sigungu, or sido */
+    let r=REGIONS.find(x=>x.dong===name||x.dong.includes(name));
+    if(!r){
+      r=REGIONS.find(x=>x.sigungu.includes(name)||x.sido.includes(name));
+    }
+    if(!r){
+      /* Generate a new region (async — 카카오 지오코딩 사용) */
+      r=await addGeneratedRegion(name);
+    }
+    /* Update page title */
+    document.title=r.dong+' 입지 분석 — 덴탈맵AI 치과개원 입지분석';
+    analysisState={tab:'overview',generating:false,generated:false};
+    renderAnalysisContent(r);
+  })();
 });
 </script>
 </body>
