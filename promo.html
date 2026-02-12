@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>서비스 소개 — 덴탈맵AI 치과개원 입지분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
+<style>
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeInUp .6s ease-out forwards;opacity:0}
+.fade-up-1{animation-delay:.1s}.fade-up-2{animation-delay:.2s}.fade-up-3{animation-delay:.3s}
+.fade-up-4{animation-delay:.4s}.fade-up-5{animation-delay:.5s}.fade-up-6{animation-delay:.6s}
+</style>
+</head>
+<body class="antialiased bg-white text-gray-900">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-sky-100/90 backdrop-blur border-b border-sky-200">
+<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<a href="index.html" class="flex items-center gap-2"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-lg text-blue-900">덴탈맵AI <span class="text-base font-semibold text-blue-600">치과개원 입지분석</span></span></a>
+<nav class="hidden md:flex items-center gap-8">
+<a href="analysis.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">입지분석</a>
+<a href="map.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">지도 탐색</a>
+<a href="pricing.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">요금제</a>
+<a href="reports.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">리포트</a>
+<span class="text-sm text-blue-600 font-semibold border-b-2 border-blue-600 pb-0.5">홍보</span>
+<a href="faq.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">FAQ</a>
+<a href="manual.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">사용자 매뉴얼</a>
+</nav>
+<div class="hidden md:flex items-center gap-3"><a href="map.html" class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">바로 체험하기</a></div>
+<button class="md:hidden p-2 text-blue-800" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+</div>
+<div id="mobile-menu" class="hidden md:hidden border-t border-sky-200 bg-sky-50 px-6 py-4 space-y-3">
+<a href="analysis.html" class="block text-blue-800 font-medium py-2">입지분석</a>
+<a href="map.html" class="block text-blue-800 font-medium py-2">지도 탐색</a>
+<a href="pricing.html" class="block text-blue-800 font-medium py-2">요금제</a>
+<a href="reports.html" class="block text-blue-800 font-medium py-2">리포트</a>
+<span class="block text-blue-600 font-semibold py-2">홍보</span>
+<a href="faq.html" class="block text-blue-800 font-medium py-2">FAQ</a>
+<a href="manual.html" class="block text-blue-800 font-medium py-2">사용자 매뉴얼</a>
+<hr class="border-gray-100">
+<a href="map.html" class="block bg-blue-600 text-white text-center py-2.5 rounded-lg font-semibold">바로 체험하기</a>
+</div>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white py-20 md:py-28 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+<div class="absolute bottom-0 left-0 w-72 h-72 bg-blue-400/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+<div class="max-w-5xl mx-auto px-6 relative">
+<div class="text-center">
+<p class="text-blue-300 text-sm font-semibold mb-4 tracking-wider fade-up">DATA-DRIVEN DENTAL CLINIC LOCATION ANALYSIS</p>
+<h1 class="text-4xl md:text-6xl font-bold leading-tight fade-up fade-up-1">데이터로 찾는<br><span class="text-yellow-300">최적의 치과 개원 입지</span></h1>
+<p class="mt-6 text-lg md:text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed fade-up fade-up-2">전국 19,500개 실제 치과 데이터 기반<br>AI가 분석하고 추천하는 과학적 입지 의사결정</p>
+<div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center fade-up fade-up-3">
+<a href="analysis.html" class="bg-yellow-400 text-gray-900 font-bold px-8 py-4 rounded-xl hover:bg-yellow-300 transition text-lg shadow-lg shadow-yellow-400/20">무료로 입지 분석하기</a>
+<a href="map.html" class="border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-xl hover:bg-white/10 transition text-lg">지도 탐색 체험</a>
+</div>
+</div>
+</div>
+</section>
+
+<!-- STATS -->
+<section class="py-12 bg-gray-50 border-b border-gray-100">
+<div class="max-w-5xl mx-auto px-6">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+<div class="fade-up"><p class="text-3xl md:text-4xl font-bold text-blue-600">19,500+</p><p class="text-sm text-gray-500 mt-1">전국 실제 치과 데이터</p></div>
+<div class="fade-up fade-up-1"><p class="text-3xl md:text-4xl font-bold text-blue-600">5축</p><p class="text-sm text-gray-500 mt-1">종합 분석 항목</p></div>
+<div class="fade-up fade-up-2"><p class="text-3xl md:text-4xl font-bold text-blue-600">3곳</p><p class="text-sm text-gray-500 mt-1">AI 추천 개원 위치</p></div>
+<div class="fade-up fade-up-3"><p class="text-3xl md:text-4xl font-bold text-blue-600">매주</p><p class="text-sm text-gray-500 mt-1">데이터 자동 갱신</p></div>
+</div>
+</div>
+</section>
+
+<!-- PROBLEM & SOLUTION -->
+<section class="py-20">
+<div class="max-w-5xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-3xl md:text-4xl font-bold">치과 개원, 어디에 해야 할까요?</h2>
+<p class="mt-4 text-gray-500 text-lg">감과 경험에만 의존하던 입지 선정, 이제 데이터로 검증하세요</p>
+</div>
+<div class="grid md:grid-cols-2 gap-8">
+<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-8">
+<h3 class="text-lg font-bold text-red-800 flex items-center gap-2 mb-6"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>기존 방식의 한계</h3>
+<ul class="space-y-4 text-sm text-red-700">
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-red-400">01</span><span>부동산 중개인의 주관적 추천에 의존</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-red-400">02</span><span>직접 발품 팔아 돌아다니며 상권 조사 (수주~수개월)</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-red-400">03</span><span>주변 치과 경쟁 현황 파악이 어려움</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-red-400">04</span><span>투자 수익률·손익분기 추정이 감에 의존</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-red-400">05</span><span>개원 후 3년 내 폐업률 20% 이상</span></li>
+</ul>
+</div>
+<div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8">
+<h3 class="text-lg font-bold text-blue-800 flex items-center gap-2 mb-6"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>덴탈맵AI 솔루션</h3>
+<ul class="space-y-4 text-sm text-blue-700">
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-blue-400">01</span><span><b>19,500개 실제 치과 데이터</b> 기반 객관적 분석</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-blue-400">02</span><span>원하는 지역 입력만으로 <b>즉시 5축 종합 분석</b></span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-blue-400">03</span><span>반경 1km 내 <b>경쟁 치과 50개</b> 상세 현황 제공</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-blue-400">04</span><span><b>투자 시뮬레이터</b>로 초기 투자금·월 순이익·손익분기 산출</span></li>
+<li class="flex items-start gap-3"><span class="mt-0.5 shrink-0 text-blue-400">05</span><span>AI가 <b>밀집 상권 내 틈새</b>를 찾아 3곳 추천</span></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+
+<!-- CORE FEATURES -->
+<section class="py-20 bg-gray-50">
+<div class="max-w-5xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-3xl md:text-4xl font-bold">핵심 기능</h2>
+<p class="mt-4 text-gray-500 text-lg">개원 준비의 모든 과정을 데이터로 지원합니다</p>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+
+<div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition">
+<div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl mb-5">🗺️</div>
+<h3 class="text-lg font-bold mb-3">5축 종합 입지 분석</h3>
+<p class="text-sm text-gray-600 leading-relaxed">인구/수요, 경쟁 환경, 비용 효율, 접근성, 성장성을 가중 평균하여 0~100점 종합 점수와 A~D 등급을 산출합니다.</p>
+</div>
+
+<div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition">
+<div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-2xl mb-5">📍</div>
+<h3 class="text-lg font-bold mb-3">AI 추천 개원 위치 3곳</h3>
+<p class="text-sm text-gray-600 leading-relaxed">밀집도x틈새 알고리즘으로 치과가 몰려있는 검증된 상권 내에서 경쟁 공백이 있는 최적 위치 3곳을 추천합니다. 각 위치별 추천 개원 규모와 예상 수익도 제공합니다.</p>
+</div>
+
+<div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition">
+<div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-2xl mb-5">🦷</div>
+<h3 class="text-lg font-bold mb-3">실제 치과 데이터 (HIRA)</h3>
+<p class="text-sm text-gray-600 leading-relaxed">건강보험심사평가원의 공식 API에서 전국 19,500개 치과의원·치과병원 데이터를 매주 자동 갱신합니다. 의사 수, 전문의 수, 개설일까지 확인 가능합니다.</p>
+</div>
+
+<div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition">
+<div class="w-14 h-14 bg-violet-100 rounded-xl flex items-center justify-center text-2xl mb-5">📊</div>
+<h3 class="text-lg font-bold mb-3">투자 시뮬레이터</h3>
+<p class="text-sm text-gray-600 leading-relaxed">면적·보증금·인테리어·장비 투자금을 조정하면 실시간으로 월 손익과 손익분기 시점이 계산됩니다. 낙관·기본·보수적 3가지 시나리오를 비교할 수 있습니다.</p>
+</div>
+
+<div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition">
+<div class="w-14 h-14 bg-rose-100 rounded-xl flex items-center justify-center text-2xl mb-5">📋</div>
+<h3 class="text-lg font-bold mb-3">AI 입지분석 리포트</h3>
+<p class="text-sm text-gray-600 leading-relaxed">9개 섹션의 종합 리포트를 자동 생성합니다. Executive Summary, 지도, 추천 위치, 경쟁 현황, 투자 분석, 리스크/기회 분석을 PDF로 저장하여 대출 상담에 활용할 수 있습니다.</p>
+</div>
+
+<div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition">
+<div class="w-14 h-14 bg-cyan-100 rounded-xl flex items-center justify-center text-2xl mb-5">🔄</div>
+<h3 class="text-lg font-bold mb-3">시작점 이동 & 재분석</h3>
+<p class="text-sm text-gray-600 leading-relaxed">지도에서 분석 중심점을 드래그하여 원하는 위치로 이동한 뒤 재분석할 수 있습니다. 카카오 역지오코딩으로 새 위치의 행정구역을 자동 인식합니다.</p>
+</div>
+
+</div>
+</div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="py-20">
+<div class="max-w-5xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-3xl md:text-4xl font-bold">이용 방법</h2>
+<p class="mt-4 text-gray-500 text-lg">3단계로 최적의 개원 입지를 찾으세요</p>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+<div class="text-center">
+<div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6">1</div>
+<h3 class="text-lg font-bold mb-3">지역 검색</h3>
+<p class="text-sm text-gray-600 leading-relaxed">원하는 지역명이나 장소를 입력하세요. '강남역', '인천경찰청', '수원 영통구' 등 자유롭게 검색할 수 있습니다. 카카오 지오코딩으로 정확한 위치를 자동 인식합니다.</p>
+</div>
+<div class="text-center">
+<div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6">2</div>
+<h3 class="text-lg font-bold mb-3">AI 분석 확인</h3>
+<p class="text-sm text-gray-600 leading-relaxed">종합 점수, 5축 상세 분석, 주변 치과 현황, AI 추천 위치 3곳을 지도와 함께 확인하세요. 시작점을 이동하여 다양한 위치를 비교 분석할 수 있습니다.</p>
+</div>
+<div class="text-center">
+<div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6">3</div>
+<h3 class="text-lg font-bold mb-3">리포트 활용</h3>
+<p class="text-sm text-gray-600 leading-relaxed">'분석 리포트 만들기' 버튼으로 9개 섹션의 종합 리포트를 생성하세요. PDF로 저장하여 대출 상담, 사업 계획서, 투자자 IR 자료로 활용할 수 있습니다.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- DATA SOURCE -->
+<section class="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white">
+<div class="max-w-5xl mx-auto px-6">
+<div class="text-center mb-12">
+<h2 class="text-3xl md:text-4xl font-bold">신뢰할 수 있는 공공 데이터</h2>
+<p class="mt-4 text-blue-200 text-lg">감이 아닌 데이터로 의사결정을 지원합니다</p>
+</div>
+<div class="grid md:grid-cols-2 gap-8">
+<div class="bg-white/10 backdrop-blur rounded-2xl p-8">
+<h3 class="text-lg font-bold text-yellow-300 mb-4">건강보험심사평가원 (HIRA)</h3>
+<ul class="space-y-3 text-sm text-blue-100">
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>전국 치과의원·치과병원 19,500개+</li>
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>GPS 좌표, 의사 수, 전문의 수, 개설일</li>
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>매주 월요일 자동 갱신 (GitHub Actions)</li>
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>좌표 유효성 검증 (위도 33~39, 경도 124~132)</li>
+</ul>
+</div>
+<div class="bg-white/10 backdrop-blur rounded-2xl p-8">
+<h3 class="text-lg font-bold text-yellow-300 mb-4">카카오 Local API</h3>
+<ul class="space-y-3 text-sm text-blue-100">
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>키워드 검색으로 정확한 좌표 변환</li>
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>역지오코딩으로 행정구역 자동 인식</li>
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>'인천경찰청' 같은 구체적 장소 지원</li>
+<li class="flex items-start gap-2"><span class="text-yellow-300 shrink-0">&#10003;</span>키워드 매칭 폴백으로 안정성 확보</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="py-20">
+<div class="max-w-3xl mx-auto px-6 text-center">
+<h2 class="text-3xl md:text-4xl font-bold">지금 바로 시작하세요</h2>
+<p class="mt-4 text-gray-500 text-lg">로그인 없이 무료로 모든 기능을 체험할 수 있습니다</p>
+<div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+<a href="analysis.html" class="bg-blue-600 text-white font-bold px-10 py-4 rounded-xl hover:bg-blue-700 transition text-lg shadow-lg shadow-blue-600/20">입지 분석 시작하기</a>
+<a href="faq.html" class="border-2 border-gray-200 text-gray-700 font-semibold px-10 py-4 rounded-xl hover:bg-gray-50 transition text-lg">자주 묻는 질문</a>
+</div>
+<p class="mt-8 text-sm text-gray-400">문의: <a href="mailto:jaiwshim@gmail.com" class="text-blue-600 hover:underline">jaiwshim@gmail.com</a> | <a href="tel:010-2397-5734" class="text-blue-600 hover:underline">010-2397-5734</a></p>
+</div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-900 text-gray-400 py-12"><div class="max-w-7xl mx-auto px-6">
+<div class="grid md:grid-cols-4 gap-8">
+<div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">D</span></div><span class="font-bold text-white">덴탈맵AI <span class="text-sm font-medium text-gray-300">치과개원 입지분석</span></span></div><p class="text-sm">데이터로 찾는 최적의 치과 개원 입지</p></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">서비스</h3><div class="space-y-2 text-sm"><a href="analysis.html" class="block hover:text-white transition">입지분석</a><a href="map.html" class="block hover:text-white transition">지도 탐색</a><a href="pricing.html" class="block hover:text-white transition">요금제</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">지원</h3><div class="space-y-2 text-sm"><a href="faq.html" class="block hover:text-white transition">자주 묻는 질문</a><a href="manual.html" class="block hover:text-white transition">사용자 매뉴얼</a><a href="index.html" class="block hover:text-white transition">홈으로</a></div></div>
+<div><h3 class="text-white font-semibold mb-3 text-sm">연락처</h3><div class="space-y-2 text-sm"><p>심재우 대표</p><p><a href="mailto:jaiwshim@gmail.com" class="hover:text-white">jaiwshim@gmail.com</a></p><p><a href="tel:010-2397-5734" class="hover:text-white">010-2397-5734</a></p></div></div>
+</div>
+<div class="border-t border-gray-800 mt-8 pt-8 text-xs"><p>덴탈맵AI 치과개원 입지분석 | 심재우 대표</p><p class="mt-1">문의: <a href="mailto:jaiwshim@gmail.com" class="text-gray-400 hover:text-white">jaiwshim@gmail.com</a> &middot; <a href="tel:010-2397-5734" class="text-gray-400 hover:text-white">010-2397-5734</a></p><p class="mt-2">&copy; 2025 DentalMap. All rights reserved.</p><p class="mt-2 text-gray-600">본 서비스의 분석 결과는 참고용이며, 투자 결정에 대한 법적 책임을 지지 않습니다.</p></div>
+</div></footer>
+
+</body>
+</html>
