@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=KAKAO_JS_KEY&libraries=services&autoload=false"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
 <style>
 html{scroll-behavior:smooth}
@@ -363,6 +364,23 @@ function getCommercialAnchors(r){
   return anchors;
 }
 
+/* ── 카카오 지오코딩 (키워드 검색) ── */
+async function kakaoGeocode(query){
+  if(typeof kakao==='undefined'||!kakao.maps)return null;
+  return new Promise(function(resolve){
+    kakao.maps.load(function(){
+      var ps=new kakao.maps.services.Places();
+      ps.keywordSearch(query,function(data,status){
+        if(status!==kakao.maps.services.Status.OK||!data.length){resolve(null);return}
+        var place=data[0];
+        var addr=place.address_name||'';
+        var parts=addr.split(' ');
+        resolve({lat:parseFloat(place.y),lng:parseFloat(place.x),sido:parts[0]||'',sigungu:parts[1]||'',placeName:place.place_name,address:addr});
+      });
+    });
+  });
+}
+
 function resolveGeoFromName(name){
   const areas=[
     {kw:['대전'],lat:36.3504,lng:127.3845,sido:'대전광역시',
@@ -441,9 +459,16 @@ function resolveGeoFromName(name){
   }
   return{lat:baseLat,lng:baseLng,sido:sido,sigungu:sigungu};
 }
-function generateRegion(name){
+async function generateRegion(name){
   const h=hashStr(name),r=n=>(a,b)=>seededRand(h*n+n,a,b);
-  const geo=resolveGeoFromName(name);
+  /* 1차: 카카오 지오코딩, 2차: 키워드 매칭 폴백 */
+  const kakaoResult=await kakaoGeocode(name).catch(function(){return null});
+  const fallback=resolveGeoFromName(name);
+  const geo=kakaoResult||fallback;
+  /* sido/sigungu가 비어있으면 fallback에서 보충 */
+  if(!geo.sido&&fallback.sido)geo.sido=fallback.sido;
+  if(!geo.sigungu&&fallback.sigungu)geo.sigungu=fallback.sigungu;
+  if(kakaoResult)console.log('[DentalMap] 카카오 지오코딩:',kakaoResult.placeName,'→',kakaoResult.lat,kakaoResult.lng);
   const pop=r(1)(15000,60000),dental=r(2)(3,18),rent=r(3)(6,22),area=r(4)(25,50),wk=r(5)(2,15),bus=r(6)(2,10),fl=r(7)(20000,100000);
   const gr=parseFloat(((r(8)(0,80)-20)/10).toFixed(1)),a20=r(9)(25,48),a40=r(10)(20,35),a60=Math.max(0,100-a20-a40);
   const ps=Math.min(100,Math.max(30,Math.round(pop/600)+r(11)(-5,5))),cs=Math.min(100,Math.max(20,100-dental*5+r(12)(-5,10)));
@@ -460,12 +485,13 @@ function generateRegion(name){
     ['역삼역','강남역','홍대입구역','신촌역','잠실역','건대입구역','사당역','왕십리역','을지로역','종각역','신림역','판교역','수원역','인천역'];
   const lns=geo.sido.includes('대전')?['1호선','대전1호선']:geo.sido.includes('부산')?['1호선','2호선','3호선','4호선','동해선']:geo.sido.includes('대구')?['1호선','2호선','3호선']:geo.sido.includes('광주')?['1호선']:['2호선','3호선','4호선','7호선','9호선','신분당선','경의중앙선','1호선','5호선','6호선'];
   const cg=['A','B','C'];
-  const jitter=0.002;
-  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true};
+  /* 카카오 결과일 때 jitter 없음 (정확한 좌표 유지) */
+  const jitter=kakaoResult?0:0.002;
+  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true,_kakaoGeo:!!kakaoResult};
 }
-function addGeneratedRegion(name){
+async function addGeneratedRegion(name){
   const ex=REGIONS.find(r=>r.dong===name&&r._generated);if(ex)return ex;
-  const r=generateRegion(name);REGIONS.push(r);return r;
+  const r=await generateRegion(name);REGIONS.push(r);return r;
 }
 
 /* ── Leaflet Map ── */
@@ -966,19 +992,21 @@ document.addEventListener('DOMContentLoaded',function(){
     return;
   }
   const name=q.trim();
-  /* Try to find in existing REGIONS by dong, sigungu, or sido */
-  let r=REGIONS.find(x=>x.dong===name||x.dong.includes(name));
-  if(!r){
-    r=REGIONS.find(x=>x.sigungu.includes(name)||x.sido.includes(name));
-  }
-  if(!r){
-    /* Generate a new region */
-    r=addGeneratedRegion(name);
-  }
-  /* Update page title */
-  document.title=r.dong+' 입지 분석 — 덴탈맵AI 치과개원 입지분석';
-  analysisState={tab:'overview',generating:false,generated:false};
-  renderAnalysisContent(r);
+  (async function(){
+    /* Try to find in existing REGIONS by dong, sigungu, or sido */
+    let r=REGIONS.find(x=>x.dong===name||x.dong.includes(name));
+    if(!r){
+      r=REGIONS.find(x=>x.sigungu.includes(name)||x.sido.includes(name));
+    }
+    if(!r){
+      /* Generate a new region (async — 카카오 지오코딩 사용) */
+      r=await addGeneratedRegion(name);
+    }
+    /* Update page title */
+    document.title=r.dong+' 입지 분석 — 덴탈맵AI 치과개원 입지분석';
+    analysisState={tab:'overview',generating:false,generated:false};
+    renderAnalysisContent(r);
+  })();
 });
 </script>
 </body>
