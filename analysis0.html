@@ -710,7 +710,7 @@ function generateRecommendedSpots(r,clinics){
   /* 종합 점수: 경쟁 낮을수록 + 검색 중심 가까울수록 높음 */
   active.forEach(function(cl){
     var compScore=maxPressure>0?1-cl._pressure/maxPressure:1;/* 0~1, 경쟁 적을수록 높음 */
-    var proxScore=Math.max(0,1-cl._distToCenter/500);/* 500m 이내일수록 높음, 500m 넘으면 0 */
+    var proxScore=Math.max(0,1-cl._distToCenter/300);/* 300m 이내일수록 높음, 300m 넘으면 0 */
     cl._recScore=compScore*0.4+proxScore*0.6;/* 근접도 60% + 경쟁도 40% */
   });
   var sorted=active.slice().sort(function(a,b){return b._recScore-a._recScore});
