@@ -681,22 +681,25 @@ function generateRecommendedSpots(r,clinics){
   /* ── Step 1: 클러스터 중심 계산 ── */
   var cLat=0,cLng=0;active.forEach(function(c){cLat+=c.lat;cLng+=c.lng});
   cLat/=active.length;cLng/=active.length;
-  /* ── Step 2: 검색 중심 가까운 순 정렬 + 경쟁 압력 계산 ── */
+  /* ── Step 2: 밀집도 × 틈새 점수 계산 ── */
+  /* 핵심: 치과가 많이 몰려있는 곳(밀집) 중에서 가장 큰 틈새를 찾음 */
   active.forEach(function(cl){
-    var minD=Infinity,cnt400=0;
+    var minD=Infinity,cnt300=0;
     active.forEach(function(other){
       if(cl===other)return;
       var d=distM(cl.lat,cl.lng,other.lat,other.lng);
       if(d<minD)minD=d;
-      if(d<=400)cnt400++;
+      if(d<=300)cnt300++;
     });
     cl._nearDist=minD===Infinity?9999:minD;
-    cl._density=cnt400;
+    cl._density=cnt300;/* 300m 내 치과 수 = 밀집도 */
     cl._distToCenter=distM(cl.lat,cl.lng,r.lat,r.lng);
+    /* 종합 점수 = 밀집도 × 틈새(최근접 거리) */
+    /* 밀집 지역(치과 多)에서 틈새(이웃 치과와 거리 큰 곳)가 최적 */
+    cl._recScore=cl._density*Math.min(cl._nearDist,300);
   });
-  /* 검색 중심 가까운 순 정렬 (1차 기준) */
-  var sorted=active.slice().sort(function(a,b){return a._distToCenter-b._distToCenter});
-  /* ── Step 3: 가까운 순서대로 2개 선택 (서로 100m+ 이격) ── */
+  var sorted=active.slice().sort(function(a,b){return b._recScore-a._recScore});
+  /* ── Step 3: 점수 높은 순 2개 선택 (서로 100m+ 이격) ── */
   var picked=[];
   for(var ci=0;ci<sorted.length&&picked.length<2;ci++){
     var ok=true;
