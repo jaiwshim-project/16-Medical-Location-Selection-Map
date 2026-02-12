@@ -654,24 +654,17 @@ function generateRecommendedSpots(r,clinics){
   cLat/=active.length;cLng/=active.length;
   var clusterR=0;active.forEach(function(c){clusterR+=distM(c.lat,c.lng,cLat,cLng)});clusterR/=active.length;
   /* ── Step 2: 치과 쌍 사이 틈새 후보 지점 생성 ── */
+  /* 실제 치과가 있는 상업 도로를 따라서만 후보 생성 (공원/주거지 방지) */
   var cands=[];
   for(var i=0;i<active.length;i++){for(var j=i+1;j<active.length;j++){
     var pd=distM(active[i].lat,active[i].lng,active[j].lat,active[j].lng);
-    if(pd<150||pd>800)continue;/* 150~800m 거리 쌍만 의미 있음 */
+    if(pd<100||pd>500)continue;/* 100~500m 거리 쌍 — 같은 상권 내 치과끼리만 */
     /* 중점 */
     cands.push({lat:(active[i].lat+active[j].lat)/2,lng:(active[i].lng+active[j].lng)/2});
-    /* 1/3, 2/3 지점 */
+    /* 1/3, 2/3 지점 (치과 사이 도로를 따라 분포) */
     cands.push({lat:active[i].lat*0.67+active[j].lat*0.33,lng:active[i].lng*0.67+active[j].lng*0.33});
     cands.push({lat:active[i].lat*0.33+active[j].lat*0.67,lng:active[i].lng*0.33+active[j].lng*0.67});
-    /* 중점에서 수직 방향 50m 오프셋 (도로 반대편 상가) */
-    var mLat=(active[i].lat+active[j].lat)/2,mLng=(active[i].lng+active[j].lng)/2;
-    var dx=active[j].lng-active[i].lng,dy=active[j].lat-active[i].lat,len=Math.sqrt(dx*dx+dy*dy);
-    if(len>0){var nx=-dy/len,ny=dx/len,off=50/111320;
-      cands.push({lat:mLat+nx*off,lng:mLng+ny*off});cands.push({lat:mLat-nx*off,lng:mLng-ny*off})}
   }}
-  /* 클러스터 중심 근처 추가 후보 (반경 내 격자) */
-  for(var k=0;k<12;k++){var ag=(k*30+seededRand(h+k,0,10))*Math.PI/180,d=Math.min(clusterR*0.6,300)/111320;
-    cands.push({lat:cLat+Math.cos(ag)*d,lng:cLng+Math.sin(ag)*d})}
   /* ── Step 3: 각 후보의 입지 점수 계산 ── */
   cands.forEach(function(cd){
     /* 최소 치과 거리 (틈새 크기) */
@@ -691,10 +684,17 @@ function generateRecommendedSpots(r,clinics){
   /* ── Step 4: 점수순 정렬 → 상위 2개 (서로 100m+ 이격) ── */
   cands.sort(function(a,b){return b.score-a.score});
   var picked=[];
+  /* 1차: 밀도 3+ 조건으로 2개 선택 */
   for(var ci=0;ci<cands.length&&picked.length<2;ci++){
     if(cands[ci].nearDist<50)continue;/* 치과 바로 위는 제외 */
+    if(cands[ci].density<3)continue;/* 주변 400m 내 치과 3개 미만 → 비상업 지역일 가능성 높음 */
     var ok=true;for(var pi=0;pi<picked.length;pi++){if(distM(cands[ci].lat,cands[ci].lng,picked[pi].lat,picked[pi].lng)<100){ok=false;break}}
     if(ok)picked.push(cands[ci])}
+  /* 2차 폴백: 밀도 조건 완화 (밀도 2+) */
+  if(picked.length<2){for(var ci2=0;ci2<cands.length&&picked.length<2;ci2++){
+    if(cands[ci2].nearDist<50||cands[ci2].density<2)continue;
+    var ok2=true;for(var pi2=0;pi2<picked.length;pi2++){if(distM(cands[ci2].lat,cands[ci2].lng,picked[pi2].lat,picked[pi2].lng)<100){ok2=false;break}}
+    if(ok2)picked.push(cands[ci2])}}
   /* ── Step 5: 주변 치과 평균으로 사업 지표 기준 산출 ── */
   var avgChairs=0,avgRev=0,avgDaily=0,avgSize=0,acN=active.length||1;
   active.forEach(function(c){avgChairs+=c.chairs;avgRev+=c.annualRevenue;avgDaily+=c.dailyPatients;avgSize+=parseInt(c.size)||30});
