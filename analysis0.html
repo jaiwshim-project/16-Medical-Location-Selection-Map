@@ -677,7 +677,7 @@ function generateNearbyClinics(r){
 }
 function generateRecommendedSpots(r,clinics){
   const h=hashStr(r.dong+'_rec'),spots=[];
-  var active=clinics?clinics.filter(function(c){return c.status==='영업중'}):[];
+  var active=clinics?clinics.filter(function(c){return c.status==='영업중'&&distM(c.lat,c.lng,r.lat,r.lng)<=300}):[];
   if(active.length<2){/* 치과 2개 미만이면 상권 앵커 기반 폴백 */
     var anc=getCommercialAnchors(r),s0=h*50;
     for(var fi=0;fi<2;fi++){var sl=anc&&anc[fi%anc.length]?anc[fi%anc.length]:{lat:r.lat,lng:r.lng};
