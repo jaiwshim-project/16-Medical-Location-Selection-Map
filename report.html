@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=31e72c61dc30008b32241bb45325abfa&libraries=services&autoload=false"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard Variable','Pretendard','system-ui','sans-serif']}}}}</script>
 <style>
 html{scroll-behavior:smooth}
@@ -25,12 +26,14 @@ body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
 .fade-in-7{animation-delay:.7s}.fade-in-8{animation-delay:.8s}.fade-in-9{animation-delay:.9s}
 .fade-in-10{animation-delay:1s}
 .leaflet-container{font-family:'Pretendard Variable',sans-serif;z-index:0}
-.map-legend{background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);padding:0;font-size:12px;max-width:200px;color:#374151;overflow:hidden}
+.map-legend{background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);padding:0;font-size:12px;line-height:1.6;max-width:180px;color:#374151;overflow:hidden}
+#report-map .leaflet-top.leaflet-right .map-legend{margin-top:10px}
+.leaflet-control-attribution{font-size:9px!important;opacity:0.7}
 .map-legend h4{font-size:12px;font-weight:700;margin:0;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
 .map-legend h4 .leg-arrow{transition:transform .2s;font-size:10px}
 .map-legend.collapsed h4 .leg-arrow{transform:rotate(-90deg)}
 .map-legend.collapsed .leg-body{display:none}
-.map-legend .leg-body{padding:8px 12px 10px;max-height:300px;overflow-y:auto;scrollbar-width:thin}
+.map-legend .leg-body{max-height:none;overflow-y:visible;padding:8px 12px 10px}
 .map-legend .leg-section{margin-top:6px;padding-top:5px;border-top:1px solid #f3f4f6}
 .map-legend .leg-section:first-of-type{margin-top:0;padding-top:0;border-top:none}
 .map-legend .leg-title{font-size:10px;font-weight:700;color:#6b7280;letter-spacing:.5px;margin-bottom:3px}
@@ -42,7 +45,7 @@ body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   body{background:white!important}
   html,body{width:100%!important;margin:0!important;padding:0!important}
-  @page{size:A4;margin:10mm 8mm 14mm 8mm;@bottom-right{content:counter(page)" / "counter(pages);font-size:9px;color:#9ca3af;font-family:'Pretendard Variable',sans-serif}}
+  @page{size:A4;margin:10mm 8mm}
   .fade-in,.fade-in-1,.fade-in-2,.fade-in-3,.fade-in-4,.fade-in-5,.fade-in-6,.fade-in-7,.fade-in-8,.fade-in-9,.fade-in-10{opacity:1!important;transform:none!important;animation:none!important}
   section{break-inside:avoid;page-break-inside:avoid}
   .leaflet-container{height:400px!important}
@@ -63,7 +66,7 @@ body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
 <a href="analysis.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">입지분석</a>
 <a href="map.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">지도 탐색</a>
 <a href="pricing.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">요금제</a>
-<a href="reports.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">리포트</a>
+<span class="text-sm text-blue-600 font-semibold border-b-2 border-blue-600 pb-0.5">리포트</span>
 <a href="promo.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">홍보</a>
 <a href="faq.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">FAQ</a>
 <a href="manual.html" class="text-sm font-medium text-blue-800 hover:text-blue-950 transition">사용자 매뉴얼</a>
@@ -75,7 +78,7 @@ body{font-family:'Pretendard Variable','Pretendard',system-ui,sans-serif}
 <a href="analysis.html" class="block text-blue-800 font-medium py-2">입지분석</a>
 <a href="map.html" class="block text-blue-800 font-medium py-2">지도 탐색</a>
 <a href="pricing.html" class="block text-blue-800 font-medium py-2">요금제</a>
-<a href="reports.html" class="block text-blue-800 font-medium py-2">리포트</a>
+<span class="block text-blue-600 font-semibold py-2">리포트</span>
 <a href="promo.html" class="block text-blue-800 font-medium py-2">홍보</a>
 <a href="faq.html" class="block text-blue-800 font-medium py-2">FAQ</a>
 <a href="manual.html" class="block text-blue-800 font-medium py-2">사용자 매뉴얼</a>
@@ -122,6 +125,103 @@ function getScoreBarColor(s){return s>=80?'bg-blue-500':s>=60?'bg-green-500':s>=
 function fmtRevKr(v){return v>=10000?((v/10000).toFixed(1)+'억'):(fmt(v)+'만')}
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
 function seededRand(seed,min,max){seed=(seed*9301+49297)%233280;return min+Math.floor((seed/233280)*(max-min+1))}
+function distM(lat1,lng1,lat2,lng2){const dLat=(lat2-lat1)*111320;const dLng=(lng2-lng1)*111320*Math.cos((lat1+lat2)/2*Math.PI/180);return Math.sqrt(dLat*dLat+dLng*dLng)}
+
+/* ── HIRA 정적 데이터 로드 (data/clinics.json) ── */
+let _clinicsCache=null;
+async function loadClinicData(){
+  if(_clinicsCache)return _clinicsCache;
+  try{
+    var resp=await fetch('data/clinics.json',{signal:AbortSignal.timeout(8000)});
+    if(!resp.ok)return null;
+    var data=await resp.json();
+    if(!data.clinics||data.clinics.length===0)return null;
+    _clinicsCache=data;
+    console.log('[DentalMap] HIRA 정적 데이터 로드 완료:',data.clinics.length,'개 치과,',data.meta?.fetched||'날짜미상');
+    return data;
+  }catch(e){console.warn('[DentalMap] clinics.json 로드 실패:',e.message);return null}
+}
+function expandClinic(it,idx){
+  var h=hashStr(it.n+idx),s=h*100+idx;
+  var drCnt=Math.max(1,it.d||1);
+  var chairs=Math.max(2,Math.round(drCnt*2.5));
+  var estbDd=it.e;
+  var estYear=typeof estbDd==='number'&&estbDd>19500000?Math.floor(estbDd/10000):typeof estbDd==='string'&&estbDd.length>=4?parseInt(estbDd.substring(0,4)):2015;
+  if(estYear<1950||estYear>2026)estYear=2015;
+  var yearsOpen=Math.max(1,2025-estYear);
+  var yrFactor=Math.min(1.3,1+Math.max(0,yearsOpen-3)*0.02);
+  var sz=Math.max(15,Math.round(chairs*7+seededRand(s*41,-3,5)));
+  var annRev=Math.round((chairs*7000+sz*120+seededRand(s*43,-3000,8000))*yrFactor);
+  var monthlyRev=Math.round(annRev/12);
+  var dailyPat=Math.max(5,Math.round(chairs*seededRand(s*47,3,7)+seededRand(s*51,-3,5)));
+  var hygienistCnt=Math.max(1,Math.round(chairs*0.8)+seededRand(s*57,-1,1));
+  var totalStaff=drCnt+hygienistCnt+Math.max(1,seededRand(s*59,1,Math.round(chairs*0.5)+1));
+  var insClaims=Math.round(dailyPat*22*seededRand(s*61,60,85)/100);
+  var nonCovRatio=seededRand(s*63,25,65);
+  var naverRating=(seededRand(s*67,30,50)/10).toFixed(1);
+  var naverReviewCnt=Math.round(yearsOpen*seededRand(s*69,15,80)+seededRand(s*71,0,100));
+  var blogExposure=seededRand(s*73,50,2000);
+  var specPool=['임플란트','치아교정','심미보철','소아진료','잇몸치료','충치치료','미백','턱관절','사랑니발치','투명교정','라미네이트'];
+  var specCnt=seededRand(s*75,2,5),specs=[];
+  for(var j=0;j<specCnt;j++){var sp=specPool[seededRand(s*77+j*13,0,specPool.length-1)];if(specs.indexOf(sp)<0)specs.push(sp)}
+  var nightWeekend=seededRand(s*79,0,2);
+  var priceLvl=['저가','중간','고가'][seededRand(s*81,0,2)];
+  var threatLvl=chairs>=5&&yearsOpen>=5?'높음':chairs>=3?'보통':'낮음';
+  var sameTypeNearby=seededRand(s*83,0,4);
+  var forSale=seededRand(s*89,0,12)===0;
+  var estAcqPrice=forSale?Math.round(annRev*seededRand(s*91,8,18)/10):null;
+  return{name:it.n,type:it.c===41?'치과병원':'치과의원',
+    director:'',lat:it.y,lng:it.x,
+    address:it.a||'',phone:it.t||'',
+    estYear:estYear,rating:naverRating,chairs:chairs,
+    hasParking:seededRand(s*31,0,1)===1,floor:'',size:sz+'평',annualRevenue:annRev,
+    monthlyRevenue:monthlyRev,dailyPatients:dailyPat,dentistCount:drCnt,hygienistCount:hygienistCnt,
+    totalStaff:totalStaff,insuranceClaims:insClaims,nonCoverageRatio:nonCovRatio,
+    naverRating:naverRating,naverReviewCount:naverReviewCnt,blogExposure:blogExposure,
+    specialties:specs,nightWeekend:nightWeekend,priceLevel:priceLvl,yearsOpen:yearsOpen,
+    competitionThreat:threatLvl,sameTypeNearby:sameTypeNearby,
+    status:'영업중',forSale:forSale,estimatedAcquisitionPrice:estAcqPrice,
+    _real:true};
+}
+async function fetchRealClinics(lat,lng,radius){
+  var data=await loadClinicData();
+  if(!data)return null;
+  var r=radius||1000;
+  var nearby=[];
+  for(var i=0;i<data.clinics.length;i++){
+    var c=data.clinics[i];
+    var d=distM(lat,lng,c.y,c.x);
+    if(d<=r){c._dist=d;nearby.push(c)}
+  }
+  if(nearby.length===0)return null;
+  nearby.sort(function(a,b){return a._dist-b._dist});
+  if(nearby.length>50)nearby=nearby.slice(0,50);
+  console.log('[DentalMap] 반경',r+'m 내 실제 치과:',nearby.length,'개');
+  return nearby.map(function(it,idx){return expandClinic(it,idx)});
+}
+
+/* ── 카카오 지오코딩 (키워드 검색) ── */
+async function kakaoGeocode(query){
+  if(typeof kakao==='undefined'){console.warn('[DentalMap] kakao SDK 미로드');return null}
+  if(!kakao.maps){console.warn('[DentalMap] kakao.maps 없음');return null}
+  return new Promise(function(resolve){
+    try{
+      kakao.maps.load(function(){
+        try{
+          var ps=new kakao.maps.services.Places();
+          ps.keywordSearch(query,function(data,status){
+            console.log('[DentalMap] 카카오 검색 상태:',status,'결과:',data?data.length:0);
+            if(status!==kakao.maps.services.Status.OK||!data.length){resolve(null);return}
+            var place=data[0];
+            var addr=place.address_name||'';
+            var parts=addr.split(' ');
+            resolve({lat:parseFloat(place.y),lng:parseFloat(place.x),sido:parts[0]||'',sigungu:parts[1]||'',placeName:place.place_name,address:addr});
+          });
+        }catch(e){console.error('[DentalMap] 카카오 검색 오류:',e);resolve(null)}
+      });
+    }catch(e){console.error('[DentalMap] kakao.maps.load 오류:',e);resolve(null)}
+  });
+}
 
 /* ═══════════════════════════════════════════════════════════════
    GEO RESOLUTION
@@ -158,9 +258,15 @@ function resolveGeoFromName(name){
 /* ═══════════════════════════════════════════════════════════════
    REGION GENERATION
    ═══════════════════════════════════════════════════════════════ */
-function generateRegion(name){
+async function generateRegion(name){
   const h=hashStr(name),r=n=>(a,b)=>seededRand(h*n+n,a,b);
-  const geo=resolveGeoFromName(name);
+  /* 1차: 카카오 지오코딩, 2차: 키워드 매칭 폴백 */
+  const kakaoResult=await kakaoGeocode(name).catch(function(){return null});
+  const fallback=resolveGeoFromName(name);
+  const geo=kakaoResult||fallback;
+  if(!geo.sido&&fallback.sido)geo.sido=fallback.sido;
+  if(!geo.sigungu&&fallback.sigungu)geo.sigungu=fallback.sigungu;
+  if(kakaoResult)console.log('[DentalMap] 카카오 지오코딩:',kakaoResult.placeName,'→',kakaoResult.lat,kakaoResult.lng);
   const pop=r(1)(15000,60000),dental=r(2)(3,18),rent=r(3)(6,22),area=r(4)(25,50),wk=r(5)(2,15),bus=r(6)(2,10),fl=r(7)(20000,100000);
   const gr=parseFloat(((r(8)(0,80)-20)/10).toFixed(1)),a20=r(9)(25,48),a40=r(10)(20,35),a60=Math.max(0,100-a20-a40);
   const ps=Math.min(100,Math.max(30,Math.round(pop/600)+r(11)(-5,5))),cs=Math.min(100,Math.max(20,100-dental*5+r(12)(-5,10)));
@@ -168,12 +274,19 @@ function generateRegion(name){
   const gs=Math.min(100,Math.max(20,50+Math.round(gr*8)+r(15)(-5,5)));
   const tot=Math.round(ps*0.25+cs*0.25+co*0.2+ac*0.15+gs*0.15);
   const gd=tot>=80?'A':tot>=70?'B':tot>=60?'C':'D';
-  const localStations=geo.sido.includes('대전')?['대전역','유성온천역','탄방역','시청역','중앙로역']:geo.sido.includes('부산')?['서면역','해운대역','부산역','남포동역','센텀시티역']:geo.sido.includes('대구')?['반월당역','동대구역','중앙로역','수성구청역','범어역']:['역삼역','강남역','홍대입구역','신촌역','잠실역','건대입구역','사당역','왕십리역','판교역','수원역'];
-  const lns=geo.sido.includes('대전')?['1호선']:geo.sido.includes('부산')?['1호선','2호선']:geo.sido.includes('대구')?['1호선','2호선']:['2호선','3호선','4호선','7호선','9호선','신분당선','1호선'];
-  const cg=['A','B','C'],jitter=0.002;
-  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true};
+  const localStations=geo.sido.includes('대전')?['대전역','유성온천역','탄방역','시청역','중앙로역','대동역','정부청사역','갈마역','월평역','용문역']:
+    geo.sido.includes('부산')?['서면역','해운대역','부산역','남포동역','센텀시티역','동래역','덕천역','사상역','연산역','수영역']:
+    geo.sido.includes('대구')?['반월당역','동대구역','중앙로역','수성구청역','범어역','달서구청역','성당못역','두류역','칠성시장역','만평역']:
+    geo.sido.includes('인천')?['부평역','인천역','구월역','간석역','인천시청역','주안역','송도역','청라역','작전역','부개역']:
+    geo.sido.includes('광주')?['상무역','금남로역','양동시장역','운천역','송정역','첨단역','평동역','녹동역','학동역','남광주역']:
+    geo.sido.includes('울산')?['울산역','태화강역','신복역','덕하역','남창역','울산KTX역','효문역','야음역','선암역','장생포역']:
+    ['역삼역','강남역','홍대입구역','신촌역','잠실역','건대입구역','사당역','왕십리역','을지로역','종각역','신림역','판교역','수원역','인천역'];
+  const lns=geo.sido.includes('대전')?['1호선','대전1호선']:geo.sido.includes('부산')?['1호선','2호선','3호선','4호선','동해선']:geo.sido.includes('대구')?['1호선','2호선','3호선']:geo.sido.includes('광주')?['1호선']:['2호선','3호선','4호선','7호선','9호선','신분당선','경의중앙선','1호선','5호선','6호선'];
+  const cg=['A','B','C'];
+  const jitter=kakaoResult?0:0.002;
+  return{dong_code:'GEN'+h.toString().slice(0,7).padStart(7,'0'),sido:geo.sido,sigungu:geo.sigungu,dong:name,population:pop,age_20_39_pct:a20,age_40_59_pct:a40,age_60_plus_pct:a60,dental_count:dental,pop_per_clinic:Math.round(pop/dental),avg_rent_pyeong:rent,area_pyeong:area,subway_station:localStations[h%localStations.length],subway_line:lns[h%lns.length],subway_walk_min:wk,bus_stops_500m:bus,daily_floating:fl,pop_growth_rate:gr,commercial_grade:cg[h%cg.length],scores:{population:ps,competition:cs,cost:co,access:ac,growth:gs,total:tot},grade:gd,lat:geo.lat+((h%100)-50)*jitter/50,lng:geo.lng+((h%100)-50)*jitter/50,_generated:true,_kakaoGeo:!!kakaoResult};
 }
-function addGeneratedRegion(name){const ex=REGIONS.find(r=>r.dong===name&&r._generated);if(ex)return ex;const r=generateRegion(name);REGIONS.push(r);return r}
+async function addGeneratedRegion(name){const ex=REGIONS.find(r=>r.dong===name&&r._generated);if(ex)return ex;const r=await generateRegion(name);REGIONS.push(r);return r}
 
 /* ═══════════════════════════════════════════════════════════════
    TEXT GENERATOR
@@ -227,15 +340,73 @@ function generateNearbyClinics(r){
       status:status,forSale:forSale,estimatedAcquisitionPrice:estAcqPrice})}
   return clinics;
 }
-function generateRecommendedSpots(r){
+function generateRecommendedSpots(r,clinics){
   const h=hashStr(r.dong+'_rec'),spots=[];
-  const reasons=[['경쟁 공백 지역 — 반경 300m 내 치과 없음','유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴','주차장 확보 용이']];
-  for(let i=0;i<2;i++){const s=h*50+i,angle=(seededRand(s,0,360)*Math.PI)/180,dist=seededRand(s*3,40,70)/10000;
-    spots.push({lat:r.lat+Math.cos(angle)*dist,lng:r.lng+Math.sin(angle)*dist,
-      label:i===0?'추천 위치 A (최적)':'추천 위치 B (대안)',
-      score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*5),
-      grade:i===0?'S':'A',reasons:reasons[i],
-      rent:Math.max(5,r.avg_rent_pyeong-seededRand(s*9,1,4)),estPop:seededRand(s*11,8000,25000)})}
+  var active=clinics?clinics.filter(function(c){return c.status==='영업중'}):[];
+  if(active.length<2)return spots;
+  /* ── Step 1: 클러스터 중심 계산 ── */
+  var cLat=0,cLng=0;active.forEach(function(c){cLat+=c.lat;cLng+=c.lng});
+  cLat/=active.length;cLng/=active.length;
+  /* ── Step 2: 밀집도 × 틈새 점수 계산 ── */
+  active.forEach(function(cl){
+    var minD=Infinity,cnt300=0;
+    active.forEach(function(other){
+      if(cl===other)return;
+      var d=distM(cl.lat,cl.lng,other.lat,other.lng);
+      if(d<minD)minD=d;
+      if(d<=300)cnt300++;
+    });
+    cl._nearDist=minD===Infinity?9999:minD;
+    cl._density=cnt300;
+    cl._distToCenter=distM(cl.lat,cl.lng,r.lat,r.lng);
+    cl._recScore=cl._density*Math.min(cl._nearDist,300);
+  });
+  var sorted=active.slice().sort(function(a,b){return b._recScore-a._recScore});
+  /* ── Step 3: 점수 높은 순 3개 선택 (서로 100m+ 이격) ── */
+  var picked=[];
+  for(var ci=0;ci<sorted.length&&picked.length<3;ci++){
+    var ok=true;
+    for(var pi=0;pi<picked.length;pi++){
+      if(distM(sorted[ci].lat,sorted[ci].lng,picked[pi].lat,picked[pi].lng)<100){ok=false;break}
+    }
+    if(ok){picked.push({lat:sorted[ci].lat,lng:sorted[ci].lng,nearDist:sorted[ci]._nearDist,density:sorted[ci]._density,clinicName:sorted[ci].name})}
+  }
+  /* ── Step 5: 주변 치과 평균으로 사업 지표 기준 산출 ── */
+  var avgChairs=0,avgRev=0,avgDaily=0,avgSize=0,acN=active.length||1;
+  active.forEach(function(c){avgChairs+=c.chairs;avgRev+=c.annualRevenue;avgDaily+=c.dailyPatients;avgSize+=parseInt(c.size)||30});
+  avgChairs=Math.round(avgChairs/acN);avgRev=Math.round(avgRev/acN);avgDaily=Math.round(avgDaily/acN);avgSize=Math.round(avgSize/acN);
+  /* ── Step 6: 추천 지점 데이터 + 사업계획 지표 생성 ── */
+  var baseReasons=[['유동인구 밀집 구간 (일 '+fmt(Math.round(r.daily_floating*0.4))+'명)','대중교통 도보 5분 이내','20~39세 젊은 인구 밀집'],
+    ['신규 아파트 단지 인접 (입주 2년 이내)','소아·교정 수요 높은 지역','임대료 본 지역 대비 15% 저렴'],
+    ['주거·상업 복합 지역','직장인 밀집 구역','야간·주말 진료 수요 높음']];
+  for(var i=0;i<picked.length;i++){var s=h*50+i,p=picked[i];
+    var gapM=Math.round(p.nearDist);
+    var rs=['주변 '+p.density+'개 치과 밀집 상권 내 틈새 (가장 가까운 치과 '+gapM+'m)'];
+    rs=rs.concat(baseReasons[i]||baseReasons[0]);
+    var gapBonus=gapM>200?1.15:gapM>120?1.08:1.0;
+    var recChairs=Math.max(3,Math.min(7,avgChairs+seededRand(s*31,-1,1)));
+    var recSize=Math.max(20,Math.min(55,Math.round(recChairs*7+seededRand(s*33,-3,5))));
+    var rentPy=Math.max(5,r.avg_rent_pyeong+seededRand(s*35,-2,1));
+    var monthlyRent=rentPy*recSize;
+    var estDailyPat=Math.max(8,Math.round(avgDaily*gapBonus+seededRand(s*37,-3,5)));
+    var estAnnRev=Math.round((recChairs*7000+recSize*120+seededRand(s*39,-2000,5000))*gapBonus);
+    var estMonthRev=Math.round(estAnnRev/12);
+    var recDentist=Math.max(1,Math.round(recChairs/2.5));
+    var recHygienist=Math.max(1,Math.round(recChairs*0.8));
+    var recStaff=recDentist+recHygienist+Math.max(1,Math.round(recChairs*0.4));
+    var initInvest=Math.round(recChairs*4500+recSize*180+seededRand(s*41,2000,8000));
+    var monthlyProfit=estMonthRev-monthlyRent-Math.round(recStaff*350+recChairs*120);
+    var breakEvenMo=monthlyProfit>0?Math.max(6,Math.min(36,Math.round(initInvest/monthlyProfit))):36;
+    spots.push({lat:p.lat,lng:p.lng,
+      label:'추천 '+(i+1)+'순위',
+      score:Math.min(98,r.scores.total+seededRand(s*7,8,20)-i*4),
+      grade:i===0?'S':i===1?'A':'A',reasons:rs,
+      nearestClinicM:gapM,surroundingClinics:p.density,
+      rent:rentPy,estPop:seededRand(s*11,8000,25000),
+      recSize:recSize,recChairs:recChairs,monthlyRent:monthlyRent,
+      estDailyPat:estDailyPat,estMonthRev:estMonthRev,estAnnRev:estAnnRev,
+      recDentist:recDentist,recHygienist:recHygienist,recStaff:recStaff,
+      initInvest:initInvest,monthlyProfit:monthlyProfit,breakEvenMo:breakEvenMo})}
   return spots;
 }
 
@@ -284,19 +455,80 @@ function renderReportMap(r,clinics,spots){
   if(reportMap){reportMap.remove();reportMap=null}
   var el=document.getElementById('report-map');if(!el||typeof L==='undefined')return;
   reportMap=L.map('report-map',{scrollWheelZoom:true,zoomControl:true}).setView([r.lat,r.lng],15);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap',maxZoom:18}).addTo(reportMap);
-  /* legend */
-  var legend=L.control({position:'bottomright'});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18}).addTo(reportMap);
+  /* legend — topright, visible by default */
+  var legend=L.control({position:'topright'});
   legend.onAdd=function(){var d=L.DomUtil.create('div','map-legend');L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);
-    d.innerHTML='<h4 onclick="this.parentElement.classList.toggle(\'collapsed\')"><span>범례</span><span class="leg-arrow">▼</span></h4><div class="leg-body"><div class="leg-section"><div class="leg-title">마커</div><div class="leg-row"><div class="leg-dot" style="background:#3b82f6"></div>분석 중심</div><div class="leg-row"><div class="leg-dot" style="background:#ef4444"></div>영업중 치과</div><div class="leg-row"><div class="leg-dot" style="background:#eab308"></div>휴업 치과</div><div class="leg-row"><div class="leg-dot" style="background:#9ca3af"></div>폐업 치과</div><div class="leg-row"><div class="leg-dot" style="background:linear-gradient(135deg,#f59e0b,#d97706)"></div>추천 개원 위치</div></div></div>';
-    return d};legend.addTo(reportMap);
-  /* center */
-  L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div style="background:#3b82f6;color:white;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid white;box-shadow:0 2px 12px rgba(59,130,246,.5)">📍</div>',iconSize:[44,44],iconAnchor:[22,22]})}).addTo(reportMap).bindPopup('<div style="font-family:Pretendard Variable,sans-serif;min-width:140px"><b style="font-size:14px">'+r.dong+'</b><br><span style="font-size:12px;color:#3b82f6;font-weight:bold">종합 '+r.scores.total+'점 · '+r.grade+'등급</span></div>');
+    var lh='<h4 onclick="this.parentElement.classList.toggle(\'collapsed\')"><span>범례</span><span class="leg-arrow">▼</span></h4><div class="leg-body">';
+    lh+='<div class="leg-section"><div class="leg-title">마커</div>';
+    lh+='<div class="leg-row"><div class="leg-dot" style="background:#3b82f6"></div>분석 중심</div>';
+    lh+='<div class="leg-row"><div class="leg-dot" style="background:#ef4444"></div>영업중 치과</div>';
+    lh+='<div class="leg-row"><div class="leg-dot" style="background:#eab308"></div>휴업 치과</div>';
+    lh+='<div class="leg-row"><div class="leg-dot" style="background:#9ca3af"></div>폐업 치과</div>';
+    lh+='<div class="leg-row"><div class="leg-dot" style="background:linear-gradient(135deg,#f59e0b,#d97706)"></div>추천 개원 위치</div>';
+    lh+='</div></div>';
+    d.innerHTML=lh;return d};legend.addTo(reportMap);
+  /* center — 드래그 가능 마커 */
+  var centerMarker=L.marker([r.lat,r.lng],{draggable:false,icon:L.divIcon({className:'',html:'<div style="background:#3b82f6;color:white;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,0.5)">📍</div>',iconSize:[40,40],iconAnchor:[20,20]})}).addTo(reportMap)
+    .bindPopup('<div style="min-width:160px;font-family:Pretendard Variable,sans-serif"><b style="font-size:15px">'+r.dong+'</b>'+(r.sido?' <span style="color:#9ca3af;font-size:11px">('+r.sido+(r.sigungu&&r.sigungu!==r.dong?' '+r.sigungu:'')+')</span>':'')+'<br><span style="color:#6b7280;font-size:12px">분석 중심 지역</span><br><span style="color:#3b82f6;font-weight:bold;font-size:18px">종합 '+r.scores.total+'점</span> <span style="font-size:12px;color:#6b7280">'+r.grade+'등급</span></div>');
+  /* 시작점 이동 버튼 */
+  var _moveMode=false;
+  var moveWrap=L.DomUtil.create('div','',el);
+  moveWrap.style.cssText='position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:1000;display:flex;flex-direction:column;gap:6px';
+  moveWrap.innerHTML='<button id="btn-move-start" style="background:white;border:2px solid #166534;border-radius:10px;padding:8px 20px;font-size:15px;font-weight:700;color:#166534;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.18);display:flex;align-items:center;gap:6px"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#3b82f6;font-size:13px;border:2px solid white;box-shadow:0 1px 4px rgba(59,130,246,0.4)">📍</span> 시작점 이동</button>'
+    +'<button id="btn-reanalyze" style="display:none;background:#166534;border:2px solid #14532d;border-radius:10px;padding:8px 20px;font-size:15px;font-weight:700;color:white;cursor:pointer;box-shadow:0 2px 8px rgba(22,101,52,0.4)">🔄 이 위치에서 재분석</button>';
+  L.DomEvent.disableClickPropagation(moveWrap);
+  document.getElementById('btn-move-start').addEventListener('click',function(){
+    _moveMode=!_moveMode;
+    centerMarker.dragging[_moveMode?'enable':'disable']();
+    this.style.background=_moveMode?'#fef3c7':'white';
+    this.style.borderColor=_moveMode?'#f59e0b':'#166534';
+    this.style.color=_moveMode?'#92400e':'#166534';
+    this.innerHTML=_moveMode?'📌 마커를 드래그하세요':'<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#3b82f6;font-size:13px;border:2px solid white;box-shadow:0 1px 4px rgba(59,130,246,0.4)">📍</span> 시작점 이동';
+    if(!_moveMode)document.getElementById('btn-reanalyze').style.display='none';
+  });
+  centerMarker.on('dragend',function(){document.getElementById('btn-reanalyze').style.display='block'});
+  document.getElementById('btn-reanalyze').addEventListener('click',async function(){
+    var pos=centerMarker.getLatLng();
+    this.innerHTML='⏳ 분석 중...';this.disabled=true;
+    var newName=r.dong;
+    if(typeof kakao!=='undefined'&&kakao.maps){
+      try{await new Promise(function(res){kakao.maps.load(function(){
+        var gc=new kakao.maps.services.Geocoder();
+        gc.coord2RegionCode(pos.lng,pos.lat,function(result,status){
+          if(status===kakao.maps.services.Status.OK&&result[0]){newName=result[0].region_3depth_name||result[0].region_2depth_name||newName}
+          res();
+        });
+      })})}catch(e){}
+    }
+    var nr=Object.assign({},r,{lat:pos.lat,lng:pos.lng,dong:newName+' (이동)',_kakaoGeo:true});
+    await renderReport(nr);
+  });
   /* clinics */
-  clinics.forEach(function(c){L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+(c.status==='영업중'?'#ef4444':c.status==='휴업'?'#eab308':'#9ca3af')+';color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25)">🦷</div>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(reportMap).bindPopup(buildClinicPopup(c),{maxWidth:300})});
-  /* recommended */
-  spots.forEach(function(s){L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="position:relative"><div style="position:absolute;inset:-6px;background:rgba(245,158,11,.2);border-radius:50%;animation:marker-pulse 2s infinite"></div><div style="position:relative;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;border:3px solid white;box-shadow:0 2px 10px rgba(245,158,11,.5)">⭐</div></div>',iconSize:[36,36],iconAnchor:[18,18]})}).addTo(reportMap).bindPopup('<div style="font-family:Pretendard Variable,sans-serif;min-width:200px"><div style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;display:inline-block;font-size:10px;font-weight:bold">🏆 추천</div><div style="font-size:14px;font-weight:bold;margin-top:4px">'+s.label+'</div><div style="font-size:22px;font-weight:bold;color:#3b82f6;margin:4px 0">'+s.score+'점 <span style="font-size:11px;background:#dbeafe;color:#2563eb;padding:1px 5px;border-radius:3px">'+s.grade+'등급</span></div><div style="font-size:11px;color:#4b5563">'+s.reasons.map(function(x){return '<div>✅ '+x+'</div>'}).join('')+'</div></div>')});
-  /* fit */
+  clinics.forEach(function(c){L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+(c.status==='영업중'?'#ef4444':c.status==='휴업'?'#eab308':'#9ca3af')+';color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer">🦷</div>',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(reportMap).bindPopup(buildClinicPopup(c),{maxWidth:300})});
+  /* recommended — 반경 50m 추천 구역 원으로 표시 */
+  var spotColors=['#f59e0b','#8b5cf6','#10b981'];
+  spots.forEach(function(s,si){
+    var clr=spotColors[si]||spotColors[0];
+    var rank=si+1;
+    L.circle([s.lat,s.lng],{radius:50,color:clr,weight:2.5,opacity:0.85,fillColor:clr,fillOpacity:0.15,dashArray:'6 4'}).addTo(reportMap);
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="background:'+clr+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);text-align:center;line-height:1.3">⭐ '+rank+'순위<br><span style="font-size:9px;opacity:0.9">반경 50m</span></div>',iconSize:[0,0],iconAnchor:[40,15]})}).addTo(reportMap)
+    .bindPopup('<div style="min-width:260px;max-width:340px;font-family:Pretendard Variable,sans-serif"><div style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;display:inline-block;font-size:11px;font-weight:bold">🏆 덴탈맵 추천</div><div style="font-size:15px;font-weight:bold;margin-top:6px">'+s.label+'</div><div style="display:flex;align-items:baseline;gap:6px;margin:4px 0"><span style="font-size:28px;font-weight:bold;color:#3b82f6">'+s.score+'점</span><span style="font-size:12px;background:#dbeafe;color:#2563eb;padding:1px 6px;border-radius:4px;font-weight:bold">'+s.grade+'등급</span></div>'
+    +'<div style="font-size:12px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:2px">'+s.reasons.map(function(x){return'<div style="padding:2px 0">✅ '+x+'</div>'}).join('')+'</div>'
+    +'<div style="margin-top:8px;padding:8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0">'
+    +'<div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">추천 개원 규모</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:11px;color:#374151">'
+    +'<span>면적 <b>'+s.recSize+'평</b></span><span>체어 <b>'+s.recChairs+'대</b></span>'
+    +'<span>의사 <b>'+s.recDentist+'명</b></span><span>위생사 <b>'+s.recHygienist+'명</b></span>'
+    +'<span>직원(총) <b>'+s.recStaff+'명</b></span><span>월임대 <b>'+fmt(s.monthlyRent)+'만</b></span></div></div>'
+    +'<div style="margin-top:6px;padding:8px;background:#eff6ff;border-radius:6px;border:1px solid #bfdbfe">'
+    +'<div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:4px">예상 수익</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:11px;color:#374151">'
+    +'<span>일환자 <b>'+s.estDailyPat+'명</b></span><span>월매출 <b>'+fmtRevKr(s.estMonthRev)+'</b></span>'
+    +'<span>연매출 <b>'+fmtRevKr(s.estAnnRev)+'</b></span><span>월순이익 <b>'+fmtRevKr(s.monthlyProfit)+'</b></span>'
+    +'<span>초기투자 <b>약 '+fmtRevKr(s.initInvest)+'</b></span><span>손익분기 <b>약 '+s.breakEvenMo+'개월</b></span></div></div></div>',{maxWidth:360});
+  });
+  /* fit bounds */
   var pts=[[r.lat,r.lng]].concat(clinics.map(function(c){return[c.lat,c.lng]})).concat(spots.map(function(s){return[s.lat,s.lng]}));
   if(pts.length>1)reportMap.fitBounds(pts,{padding:[40,40]});
 }
@@ -304,12 +536,14 @@ function renderReportMap(r,clinics,spots){
 /* ═══════════════════════════════════════════════════════════════
    RENDER PREMIUM REPORT
    ═══════════════════════════════════════════════════════════════ */
-function renderReport(r){
+async function renderReport(r){
   var tx=genTexts(r);
   var ts=r.scores.total,sl=ts>=80?'매우 유망':ts>=70?'추천':ts>=60?'조건부 추천':'주의 필요';
   var verdictIcon=ts>=80?'🟢':ts>=70?'🔵':ts>=60?'🟡':'🔴';
-  var clinics=generateNearbyClinics(r);
-  var spots=generateRecommendedSpots(r);
+  /* 실제 치과 데이터 우선, 실패 시 mock 폴백 */
+  var clinics=await fetchRealClinics(r.lat,r.lng,1000);
+  if(!clinics)clinics=generateNearbyClinics(r);
+  var spots=generateRecommendedSpots(r,clinics);
   var loc=r.sido?r.sido+' '+r.sigungu+' ':'';
   var fullLoc=(function(){var parts=[];if(r.sido)parts.push(r.sido);if(r.sigungu&&r.sigungu!==r.dong)parts.push(r.sigungu);parts.push(r.dong);return parts.join(' ')})();
   var reportId='DM-'+r.dong_code.slice(0,4)+'-'+new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
@@ -346,7 +580,8 @@ function renderReport(r){
   h+='<div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>';
   h+='<div class="relative">';
   h+='<div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">D</span></div><span class="font-bold text-white text-lg">덴탈맵AI <span class="text-base font-semibold text-yellow-300">치과개원 입지분석</span></span></div><div class="text-right"><p class="text-yellow-300 text-xs">'+dateStr+'</p><span class="inline-block mt-1 text-[10px] bg-white/10 text-yellow-200 px-2 py-0.5 rounded-full">CONFIDENTIAL</span></div></div>';
-  h+='<h1 class="text-3xl md:text-4xl font-bold leading-tight">'+r.dong+'<br><span class="text-yellow-300 text-xl md:text-2xl font-medium">치과 개원 AI 입지분석 및 추천 리포트</span></h1>';
+  var regionCtx=r.sido?(r.sigungu&&r.sigungu!==r.dong?' ('+r.sido+' '+r.sigungu+')':' ('+r.sido+')'):'';
+  h+='<h1 class="text-3xl md:text-4xl font-bold leading-tight">'+r.dong+'<span class="text-lg font-normal text-white/60">'+regionCtx+'</span><br><span class="text-yellow-300 text-xl md:text-2xl font-medium">치과 개원 AI 입지분석 및 추천 리포트</span></h1>';
   h+='<p class="mt-3 text-yellow-200/80 text-sm">'+fullLoc+' 지역의 인구, 경쟁, 비용, 접근성, 성장성을 종합 분석한 AI 의사결정 보고서</p>';
   /* ── 의뢰자 정보 ── */
   var _cp=new URLSearchParams(window.location.search);
@@ -423,20 +658,47 @@ function renderReport(r){
   /* ── 03 MAP ── */
   h+='<section class="bg-white rounded-2xl border-2 border-teal-300 shadow-sm mb-6 overflow-hidden fade-in fade-in-3">';
   h+='<div class="p-6 md:p-8 pb-4"><div class="flex items-center gap-3 mb-2"><span class="text-xs font-bold text-white bg-blue-600 w-7 h-7 rounded-lg flex items-center justify-center">03</span><h2 class="text-lg font-bold">입지 분석 지도</h2></div>';
-  h+='<p class="text-sm text-gray-500 mb-4">분석 지역 중심 반경 500m 내 치과 '+clinics.length+'개, AI 추천 개원 위치 '+spots.length+'곳</p></div>';
-  h+='<div id="report-map" style="height:500px;z-index:0"></div>';
-  h+='<div class="px-6 py-3 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50">마커를 클릭하면 상세 정보를 확인할 수 있습니다 · 우측 하단 범례 참조</div></section>';
+  h+='<p class="text-sm text-gray-500 mb-4">분석 지역 중심 반경 1km 내 치과 '+clinics.length+'개, AI 추천 개원 위치 '+spots.length+'곳</p></div>';
+  h+='<div id="report-map" style="height:70vh;z-index:0"></div>';
+  h+='<div class="px-6 py-3 text-[11px] text-gray-400 border-t border-gray-100 bg-gray-50">마커를 클릭하면 상세 정보를 확인할 수 있습니다 · 우측 상단 범례 참조 · 추천 위치는 반경 50m 원으로 표시</div></section>';
 
-  /* ── 04 RECOMMENDED SPOTS ── */
-  h+='<section class="mb-6 fade-in fade-in-4"><div class="grid md:grid-cols-2 gap-4">';
-  spots.forEach(function(s){
-    h+='<div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-6">';
-    h+='<div class="flex items-center gap-2 mb-3"><span class="text-lg">⭐</span><span class="text-xs font-bold text-amber-800 bg-amber-200 px-2.5 py-0.5 rounded-full">덴탈맵 AI 추천</span><span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-auto">'+s.grade+'등급</span></div>';
+  /* ── 04 RECOMMENDED SPOTS (3 ranked cards) ── */
+  var spotBorders=['border-amber-300','border-violet-300','border-emerald-300'];
+  var spotBgs=['from-amber-50 to-orange-50','from-violet-50 to-purple-50','from-emerald-50 to-teal-50'];
+  var spotBadgeBg=['bg-amber-200 text-amber-800','bg-violet-200 text-violet-800','bg-emerald-200 text-emerald-800'];
+  h+='<section class="mb-6 fade-in fade-in-4"><div class="grid md:grid-cols-3 gap-4">';
+  spots.forEach(function(s,si){
+    var rank=si+1;
+    h+='<div class="bg-gradient-to-br '+spotBgs[si]+' border-2 '+spotBorders[si]+' rounded-2xl p-6">';
+    h+='<div class="flex items-center gap-2 mb-3"><span class="text-lg">⭐</span><span class="text-xs font-bold '+spotBadgeBg[si]+' px-2.5 py-0.5 rounded-full">'+rank+'순위 추천</span><span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-auto">'+s.grade+'등급</span></div>';
     h+='<h3 class="font-bold text-base">'+s.label+'</h3>';
     h+='<p class="text-3xl font-bold text-blue-600 mt-1">'+s.score+'<span class="text-sm text-gray-400 font-medium">점</span></p>';
     h+='<ul class="mt-3 space-y-1.5">'+s.reasons.map(function(x){return '<li class="text-sm text-gray-700 flex items-start gap-1.5"><span class="text-green-500 mt-0.5 shrink-0">✓</span>'+x+'</li>'}).join('')+'</ul>';
-    h+='<div class="mt-3 pt-3 border-t border-amber-200 flex gap-4 text-xs text-gray-500"><span>임대료 '+s.rent+'만/평</span><span>주변인구 '+fmt(s.estPop)+'명</span></div></div>';
+    /* 추천 개원 규모 */
+    h+='<div class="mt-3 pt-3 border-t border-amber-200">';
+    h+='<p class="text-xs font-bold text-emerald-800 mb-2">추천 개원 규모</p>';
+    h+='<div class="grid grid-cols-3 gap-x-3 gap-y-1 text-[11px]">';
+    h+='<span class="text-gray-500">면적 <b class="text-gray-700">'+s.recSize+'평</b></span>';
+    h+='<span class="text-gray-500">체어 <b class="text-gray-700">'+s.recChairs+'대</b></span>';
+    h+='<span class="text-gray-500">월임대 <b class="text-gray-700">'+fmt(s.monthlyRent)+'만</b></span>';
+    h+='</div></div>';
+    /* 예상 수익 */
+    h+='<div class="mt-2.5 pt-2.5 border-t border-amber-200">';
+    h+='<p class="text-xs font-bold text-blue-800 mb-2">예상 수익</p>';
+    h+='<div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">';
+    h+='<span class="text-gray-500">일환자 <b class="text-emerald-700">'+s.estDailyPat+'명</b></span>';
+    h+='<span class="text-gray-500">월매출 <b class="text-emerald-700">'+fmtRevKr(s.estMonthRev)+'</b></span>';
+    h+='<span class="text-gray-500">연매출 <b class="text-emerald-700">'+fmtRevKr(s.estAnnRev)+'</b></span>';
+    h+='<span class="text-gray-500">월순이익 <b class="text-emerald-700">'+fmtRevKr(s.monthlyProfit)+'</b></span>';
+    h+='</div></div>';
+    /* 투자·손익분기 */
+    h+='<div class="mt-2.5 pt-2.5 border-t border-amber-200 flex items-center justify-between text-[11px]">';
+    h+='<span class="text-gray-500">초기투자 <b class="text-violet-700">약 '+fmtRevKr(s.initInvest)+'</b></span>';
+    h+='<span class="text-gray-500">손익분기 <b class="text-violet-700">약 '+s.breakEvenMo+'개월</b></span>';
+    h+='</div>';
+    h+='</div>';
   });
+  if(spots.length===0){h+='<div class="col-span-3 text-center text-gray-400 py-8">추천 위치를 계산할 수 없습니다 (주변 치과 데이터 부족)</div>'}
   h+='</div></section>';
 
   /* ── 05 5-AXIS DETAIL ── */
@@ -609,7 +871,7 @@ function renderReport(r){
     var rec1d='본 AI 분석 결과 '+r.dong+' 지역은 종합 '+ts+'점으로 <b>'+sl+'</b> 판정을 받았습니다. ';
     rec1d+='인구 '+fmt(r.population)+'명, 유동인구 일 '+fmt(r.daily_floating)+'명의 수요 기반과 ';
     rec1d+=r.scores.competition>=60?'상대적으로 양호한 경쟁 환경':'다소 치열하지만 차별화 가능한 경쟁 환경';
-    rec1d+='을 고려할 때, 추천 위치 A·B를 중심으로 구체적인 임대 물건 탐색에 착수하시길 권장합니다. ';
+    rec1d+='을 고려할 때, AI가 추천하는 1·2·3순위 위치를 중심으로 구체적인 임대 물건 탐색에 착수하시길 권장합니다. ';
     rec1d+='개원 시기는 임대 계약부터 인테리어 완공까지 통상 3~4개월이 소요되므로, 목표 개원일 기준 최소 6개월 전부터 준비를 시작하는 것이 바람직합니다.';
     recs.push({n:'1',t:'개원 추진',d:rec1d,c:'bg-blue-50 border-blue-200'});
   }else{
@@ -620,7 +882,7 @@ function renderReport(r){
     rec1d+='인근 유사 상권의 비교 분석을 통해 보다 유리한 대안 입지를 함께 탐색하시는 것을 권장드립니다.';
     recs.push({n:'1',t:'추가 조사',d:rec1d,c:'bg-yellow-50 border-yellow-200'});
   }
-  var rec2d='추천 위치 A와 B를 반드시 직접 방문하여 현장 여건을 확인하세요. ';
+  var rec2d='추천 1·2·3순위 위치를 반드시 직접 방문하여 현장 여건을 확인하세요. ';
   rec2d+='주요 확인 사항으로는 ① 건물 상태 및 층수별 임대 조건 비교, ② '+r.subway_station+' 방면 도보 접근성과 대중교통 편의성, ③ 주차장 확보 가능 여부와 인근 유료 주차장 현황, ④ 주변 약국·병원 등 의료 클러스터 형성 여부입니다. ';
   rec2d+='방문 시 평일 오전·오후, 주말 등 시간대별 유동인구 변화를 직접 관찰하고, 인근 치과에 환자로서 방문하여 서비스 수준과 가격대를 파악하면 경쟁 전략 수립에 큰 도움이 됩니다.';
   recs.push({n:'2',t:'현장 실사',d:rec2d,c:'bg-green-50 border-green-200'});
@@ -657,7 +919,7 @@ function renderReport(r){
   document.getElementById('report-root').innerHTML=h;
 
   /* Render map after DOM update */
-  setTimeout(function(){renderReportMap(r,clinics,spots)},200);
+  setTimeout(function(){renderReportMap(r,clinics,spots)},300);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -715,12 +977,13 @@ document.addEventListener('DOMContentLoaded',function(){
   var name=q.trim();
   var direct=params.get('direct');
 
-  function loadReport(){
+  async function loadReport(){
     var r=REGIONS.find(function(x){return x.dong===name||x.dong.includes(name)});
     if(!r)r=REGIONS.find(function(x){return x.sigungu.includes(name)||x.sido.includes(name)});
-    if(!r)r=addGeneratedRegion(name);
-    document.title=r.dong+' AI 입지분석 리포트 — 덴탈맵';
-    renderReport(r);
+    if(!r)r=await addGeneratedRegion(name);
+    var regionCtx=r.sido?(r.sigungu&&r.sigungu!==r.dong?' ('+r.sido+' '+r.sigungu+')':' ('+r.sido+')'):'';
+    document.title=r.dong+regionCtx+' AI 입지분석 리포트 — 덴탈맵';
+    await renderReport(r);
   }
 
   if(direct==='1'){
